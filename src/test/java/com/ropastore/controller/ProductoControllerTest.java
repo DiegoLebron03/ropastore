@@ -1,13 +1,15 @@
 package com.ropastore.controller;
 
+import com.ropastore.entity.Usuario;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,10 +24,18 @@ class ProductoControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    private MockHttpSession session;
+
+    @BeforeEach
+    void setUp() {
+        session = new MockHttpSession();
+        session.setAttribute(AuthController.SESSION_USER_KEY, new Usuario("Admin", "1234", "Administrador", "ADMIN"));
+    }
+
     @Test
     @DisplayName("Debe listar productos en catálogo con status 200")
     void testListarProductos() throws Exception {
-        mockMvc.perform(get("/productos"))
+        mockMvc.perform(get("/productos").session(session))
             .andExpect(status().isOk())
             .andExpect(view().name("productos/list"))
             .andExpect(model().attributeExists("productos"))
@@ -35,7 +45,7 @@ class ProductoControllerTest {
     @Test
     @DisplayName("Debe mostrar formulario de nuevo producto")
     void testFormularioNuevo() throws Exception {
-        mockMvc.perform(get("/productos/nuevo"))
+        mockMvc.perform(get("/productos/nuevo").session(session))
             .andExpect(status().isOk())
             .andExpect(view().name("productos/form"))
             .andExpect(model().attributeExists("productoDTO"));
@@ -44,7 +54,7 @@ class ProductoControllerTest {
     @Test
     @DisplayName("Debe crear producto nuevo y redirigir a catálogo con mensaje")
     void testCrearProductoExitoso() throws Exception {
-        mockMvc.perform(post("/productos/nuevo")
+        mockMvc.perform(post("/productos/nuevo").session(session)
                 .param("codigo", "TEST-NOVO")
                 .param("descripcion", "Prenda de prueba nueva")
                 .param("costo", "450.00")
@@ -69,6 +79,7 @@ class ProductoControllerTest {
 
         mockMvc.perform(multipart("/productos/nuevo")
                 .file(file)
+                .session(session)
                 .param("codigo", "CAM-IMG-1")
                 .param("descripcion", "Camisa con Imagen Subida")
                 .param("costo", "600.00")
@@ -92,6 +103,7 @@ class ProductoControllerTest {
 
         mockMvc.perform(multipart("/productos/nuevo")
                 .file(file)
+                .session(session)
                 .param("codigo", "CAM-BAD")
                 .param("descripcion", "Prenda con archivo ejecutable")
                 .param("costo", "600.00")

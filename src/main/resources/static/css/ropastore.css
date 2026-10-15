@@ -321,7 +321,8 @@ img {
 }
 
 .rs-layout.rs-sidebar-collapsed .rs-user-profile .rs-user-name,
-.rs-layout.rs-sidebar-collapsed .rs-user-profile .rs-user-role {
+.rs-layout.rs-sidebar-collapsed .rs-user-profile .rs-user-role,
+.rs-layout.rs-sidebar-collapsed .rs-logout-btn {
     display: none !important;
 }
 

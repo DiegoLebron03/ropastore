@@ -1,12 +1,15 @@
 package com.ropastore.controller;
 
 import com.ropastore.entity.Producto;
+import com.ropastore.entity.Usuario;
 import com.ropastore.repository.ProductoRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
@@ -24,10 +27,18 @@ class InventoryControllerTest {
     @Autowired
     private ProductoRepository productoRepository;
 
+    private MockHttpSession session;
+
+    @BeforeEach
+    void setUp() {
+        session = new MockHttpSession();
+        session.setAttribute(AuthController.SESSION_USER_KEY, new Usuario("Admin", "1234", "Administrador", "ADMIN"));
+    }
+
     @Test
     @DisplayName("Debe mostrar la pantalla de operaciones de inventario con status 200")
     void testFormularioOperaciones() throws Exception {
-        mockMvc.perform(get("/inventario/operaciones"))
+        mockMvc.perform(get("/inventario/operaciones").session(session))
             .andExpect(status().isOk())
             .andExpect(view().name("inventario/operaciones"))
             .andExpect(model().attributeExists("productos"))
@@ -41,7 +52,7 @@ class InventoryControllerTest {
     void testRegistrarEntradaOperacion() throws Exception {
         Producto cam = productoRepository.findByCodigoIgnoreCase("CAM-001").orElseThrow();
 
-        mockMvc.perform(post("/inventario/operaciones")
+        mockMvc.perform(post("/inventario/operaciones").session(session)
                 .param("productoId", String.valueOf(cam.getId()))
                 .param("tipo", "COMPRA")
                 .param("cantidad", "10")
@@ -58,7 +69,7 @@ class InventoryControllerTest {
     void testRegistrarOperacionConGeneracionDeReporteIndividual() throws Exception {
         Producto cam = productoRepository.findByCodigoIgnoreCase("CAM-001").orElseThrow();
 
-        mockMvc.perform(post("/inventario/operaciones")
+        mockMvc.perform(post("/inventario/operaciones").session(session)
                 .param("productoId", String.valueOf(cam.getId()))
                 .param("tipo", "COMPRA")
                 .param("cantidad", "5")
@@ -74,7 +85,7 @@ class InventoryControllerTest {
     @Test
     @DisplayName("Debe listar historial de movimientos de inventario con status 200")
     void testListarMovimientos() throws Exception {
-        mockMvc.perform(get("/inventario/movimientos"))
+        mockMvc.perform(get("/inventario/movimientos").session(session))
             .andExpect(status().isOk())
             .andExpect(view().name("inventario/movimientos"))
             .andExpect(model().attributeExists("movimientos"))

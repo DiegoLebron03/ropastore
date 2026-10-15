@@ -1,11 +1,13 @@
 package com.ropastore.config;
 
 import com.ropastore.entity.Producto;
+import com.ropastore.entity.Usuario;
 import com.ropastore.enums.CategoriaProducto;
 import com.ropastore.enums.EstadoProducto;
 import com.ropastore.enums.TallaProducto;
 import com.ropastore.enums.TipoTransaccion;
 import com.ropastore.repository.ProductoRepository;
+import com.ropastore.repository.UsuarioRepository;
 import com.ropastore.service.InventoryService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -20,14 +22,22 @@ public class DataInitializer implements CommandLineRunner {
 
     private final ProductoRepository productoRepository;
     private final InventoryService inventoryService;
+    private final UsuarioRepository usuarioRepository;
 
-    public DataInitializer(ProductoRepository productoRepository, InventoryService inventoryService) {
+    public DataInitializer(ProductoRepository productoRepository,
+                           InventoryService inventoryService,
+                           UsuarioRepository usuarioRepository) {
         this.productoRepository = productoRepository;
         this.inventoryService = inventoryService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Override
     public void run(String... args) {
+        if (usuarioRepository.findByUsernameIgnoreCase("Admin").isEmpty()) {
+            usuarioRepository.save(new Usuario("Admin", "1234", "Administrador", "ADMIN"));
+        }
+
         if (productoRepository.count() > 0) {
             return;
         }

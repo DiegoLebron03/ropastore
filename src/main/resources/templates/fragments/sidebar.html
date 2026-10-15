@@ -75,12 +75,19 @@
 
     <!-- Sidebar Footer / Perfil -->
     <div class="rs-sidebar-footer">
-        <div class="rs-user-profile">
-            <img th:src="@{/images/avatar.png}" alt="Avatar" class="rs-user-avatar"/>
-            <div class="flex-grow-1 overflow-hidden">
-                <div class="rs-user-name text-truncate">Diego Lebron</div>
-                <div class="rs-user-role text-truncate">Administrador</div>
+        <div class="rs-user-profile d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2 overflow-hidden min-w-0">
+                <div class="rs-user-avatar d-flex align-items-center justify-content-center bg-primary text-white rounded-circle flex-shrink-0" style="width: 36px; height: 36px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">person</span>
+                </div>
+                <div class="flex-grow-1 overflow-hidden min-w-0">
+                    <div class="rs-user-name text-truncate" th:text="${session.usuarioLogueado != null ? session.usuarioLogueado.nombre : 'Admin'}">Admin</div>
+                    <div class="rs-user-role text-truncate" th:text="${session.usuarioLogueado != null ? session.usuarioLogueado.rol : 'ADMIN'}">ADMIN</div>
+                </div>
             </div>
+            <a th:href="@{/logout}" class="btn btn-sm btn-outline-danger p-1 border-0 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 rs-logout-btn" title="Cerrar sesión" aria-label="Cerrar sesión">
+                <span class="material-symbols-outlined" style="font-size: 18px;">logout</span>
+            </a>
         </div>
     </div>
 </aside>
