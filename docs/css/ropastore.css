@@ -147,9 +147,16 @@ img {
     transition: padding 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.rs-brand img {
-    height: 36px;
+.rs-brand-logo-full {
+    height: 38px;
     width: auto;
+    max-width: 175px;
+    object-fit: contain;
+    display: block;
+}
+
+.rs-brand-logo-icon {
+    display: none !important;
 }
 
 .rs-brand-text {
@@ -275,6 +282,18 @@ img {
 .rs-layout.rs-sidebar-collapsed .rs-brand {
     padding: 0 16px;
     justify-content: center;
+}
+
+.rs-layout.rs-sidebar-collapsed .rs-brand-logo-full {
+    display: none !important;
+}
+
+.rs-layout.rs-sidebar-collapsed .rs-brand-logo-icon {
+    display: block !important;
+    height: 38px;
+    width: 38px;
+    object-fit: contain;
+    margin: 0 auto;
 }
 
 .rs-layout.rs-sidebar-collapsed .rs-brand-text {

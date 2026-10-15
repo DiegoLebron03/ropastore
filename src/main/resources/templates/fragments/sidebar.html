@@ -6,7 +6,8 @@
         <!-- Brand Header (Interactivo: clic para plegar/desplegar) -->
         <div class="rs-brand d-flex align-items-center justify-content-between" onclick="toggleSidebar()" role="button" title="Plegar / Desplegar menú lateral">
             <div class="d-flex align-items-center text-decoration-none text-dark flex-grow-1 min-w-0" style="cursor: pointer;">
-                <img th:src="@{/images/logo.png}" alt="RopaStore Logo"/>
+                <img th:src="@{/images/logo.png}" alt="RopaStore Logo" class="rs-brand-logo-full"/>
+                <img th:src="@{/images/logo-icon.png}" alt="RopaStore Icon" class="rs-brand-logo-icon"/>
             </div>
             <button class="btn btn-sm btn-light border d-lg-none p-1 text-muted" type="button" onclick="event.stopPropagation(); closeMobileSidebar()" aria-label="Cerrar menú">
                 <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
@@ -77,7 +78,7 @@
     <div class="rs-sidebar-footer">
         <div class="rs-user-profile d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2 overflow-hidden min-w-0">
-                <div class="rs-user-avatar d-flex align-items-center justify-content-center bg-primary text-white rounded-circle flex-shrink-0" style="width: 36px; height: 36px;">
+                <div class="rs-user-avatar d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 36px; height: 36px; background-color: #E2E8F0; color: #475569;">
                     <span class="material-symbols-outlined" style="font-size: 20px;">person</span>
                 </div>
                 <div class="flex-grow-1 overflow-hidden min-w-0">

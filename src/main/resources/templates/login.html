@@ -9,20 +9,21 @@
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}"/>
     
     <!-- RopaStore Official Theme CSS -->
-    <link rel="stylesheet" th:href="@{/css/ropastore.css?v=2.2}"/>
+    <link rel="stylesheet" th:href="@{/css/ropastore.css?v=2.3}"/>
 
     <style>
         .rs-login-page {
             min-height: 100vh;
             background: radial-gradient(circle at 10% 20%, #F0FDF4 0%, #F8FAFC 90%);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 24px 16px;
         }
         .rs-login-card {
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             background-color: var(--rs-white);
             border-radius: 16px;
             border: 1px solid var(--rs-slate-200);
@@ -30,15 +31,90 @@
             padding: 36px 32px;
         }
         .rs-login-logo {
-            height: 48px;
+            height: 54px;
             width: auto;
+            max-width: 230px;
             object-fit: contain;
         }
-        .rs-demo-credentials {
-            background-color: var(--rs-slate-50);
-            border: 1px dashed var(--rs-slate-300);
-            border-radius: 10px;
-            padding: 12px 14px;
+        .rs-login-label {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--rs-slate-500);
+            margin-bottom: 6px;
+            display: block;
+            transition: color 0.15s ease, font-weight 0.15s ease;
+        }
+        .rs-login-field:focus-within .rs-login-label {
+            color: var(--rs-slate-800);
+            font-weight: 600;
+        }
+        .rs-login-input-group {
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #ffffff;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .rs-login-input-group .input-group-text {
+            background-color: #ffffff;
+            border: none;
+            color: var(--rs-slate-400);
+            padding-left: 12px;
+            padding-right: 4px;
+        }
+        .rs-login-input-group .form-control {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            font-size: 0.9rem;
+            color: var(--rs-slate-800);
+            padding: 10px 12px;
+        }
+        .rs-login-input-group .form-control::placeholder {
+            color: var(--rs-slate-400);
+        }
+        .rs-login-input-group .btn-toggle-pwd {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
+            color: var(--rs-slate-400);
+            padding: 0 12px;
+        }
+        .rs-login-input-group .btn-toggle-pwd:hover {
+            color: var(--rs-slate-600);
+        }
+        .rs-login-field:focus-within .rs-login-input-group {
+            border-color: #94A3B8;
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18);
+        }
+        .rs-login-btn {
+            background-color: #16A34A !important;
+            border-color: #16A34A !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            padding: 11px 16px;
+            transition: all 0.15s ease-in-out;
+        }
+        .rs-login-btn:hover {
+            background-color: #15803D !important;
+            border-color: #15803D !important;
+            color: #ffffff !important;
+        }
+        .rs-login-btn:active {
+            background-color: #166534 !important;
+            border-color: #166534 !important;
+        }
+        .rs-demo-hint {
+            color: #64748B;
+            font-size: 0.82rem;
+            letter-spacing: 0.01em;
+            user-select: none;
+        }
+        .rs-demo-hint strong {
+            color: #334155;
         }
     </style>
 </head>
@@ -46,9 +122,8 @@
 
 <div class="rs-login-card">
     <div class="text-center mb-4">
-        <img th:src="@{/images/logo.png}" alt="RopaStore Logo" class="rs-login-logo mb-2"/>
-        <h1 class="h4 fw-bold text-dark mb-1">Iniciar Sesión</h1>
-        <p class="text-muted small mb-0">Ingresa tus credenciales para acceder al inventario</p>
+        <img th:src="@{/images/logo.png}" alt="RopaStore Logo" class="rs-login-logo mb-3"/>
+        <h1 class="h4 fw-bold text-dark mb-0">Iniciar Sesión</h1>
     </div>
 
     <!-- Mensaje de Error -->
@@ -64,14 +139,14 @@
     </div>
 
     <form th:action="@{/login}" method="post" id="loginForm" autocomplete="off">
-        <div class="mb-3">
-            <label for="username" class="form-label fw-semibold small text-secondary">Usuario</label>
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0 text-muted">
+        <div class="mb-3 rs-login-field">
+            <label for="username" class="rs-login-label">Usuario</label>
+            <div class="input-group rs-login-input-group">
+                <span class="input-group-text">
                     <span class="material-symbols-outlined" style="font-size: 18px;">person</span>
                 </span>
                 <input type="text"
-                       class="form-control border-start-0 ps-1"
+                       class="form-control"
                        id="username"
                        name="username"
                        th:value="${username}"
@@ -81,19 +156,19 @@
             </div>
         </div>
 
-        <div class="mb-3">
-            <label for="password" class="form-label fw-semibold small text-secondary">Contraseña</label>
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0 text-muted">
+        <div class="mb-4 rs-login-field">
+            <label for="password" class="rs-login-label">Contraseña</label>
+            <div class="input-group rs-login-input-group">
+                <span class="input-group-text">
                     <span class="material-symbols-outlined" style="font-size: 18px;">lock</span>
                 </span>
                 <input type="password"
-                       class="form-control border-start-0 border-end-0 ps-1"
+                       class="form-control"
                        id="password"
                        name="password"
                        placeholder="••••••••"
                        required/>
-                <button class="btn btn-outline-secondary border-start-0 bg-white"
+                <button class="btn btn-toggle-pwd"
                         type="button"
                         id="togglePassword"
                         onclick="togglePasswordVisibility()"
@@ -103,35 +178,15 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 mb-3">
-            <span class="material-symbols-outlined" style="font-size: 20px;">login</span>
-            <span>Ingresar al Sistema</span>
+        <button type="submit" class="btn rs-login-btn w-100">
+            Iniciar sesión
         </button>
     </form>
+</div>
 
-    <!-- Caja de credenciales de demostración -->
-    <div class="rs-demo-credentials mb-3">
-        <div class="d-flex align-items-start gap-2 mb-2">
-            <span class="material-symbols-outlined text-primary flex-shrink-0" style="font-size: 20px;">info</span>
-            <div class="flex-grow-1">
-                <div class="fw-semibold small text-dark">Acceso de Demostración</div>
-                <div class="text-muted" style="font-size: 0.78rem;">
-                    Usuario: <strong class="text-dark">Admin</strong> &nbsp;|&nbsp;
-                    Clave: <strong class="text-dark">1234</strong>
-                </div>
-            </div>
-        </div>
-        <button type="button"
-                class="btn btn-sm btn-outline-success w-100 py-1"
-                onclick="fillDemoCredentials()"
-                style="font-size: 0.8rem;">
-            Rellenar credenciales de prueba
-        </button>
-    </div>
-
-    <div class="text-center text-muted" style="font-size: 0.75rem;">
-        RopaStore &bull; Proyecto de demostración
-    </div>
+<!-- Acceso de prueba fuera del modal, en tono gris sutil -->
+<div class="text-center mt-3 rs-demo-hint" onclick="fillDemoCredentials()" style="cursor: pointer;" title="Clic para auto-completar credenciales">
+    Acceso de prueba: <span>Usuario:</span> <strong>Admin</strong> &nbsp;&bull;&nbsp; <span>Contraseña:</span> <strong>1234</strong>
 </div>
 
 <script>
@@ -155,4 +210,3 @@
 
 </body>
 </html>
-
