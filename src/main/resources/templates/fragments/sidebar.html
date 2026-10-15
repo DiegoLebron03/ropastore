@@ -61,6 +61,15 @@
         <!-- Grupo Gestión & Reportes -->
         <div class="rs-nav-group-title mt-2">Gestión & Análisis</div>
         <nav class="d-flex flex-column">
+            <a th:href="@{/analisis}"
+               class="rs-nav-item"
+               title="Gráficos y Estadísticas"
+               th:classappend="${activeNav == 'analisis'} ? 'active' : ''">
+                <div class="rs-nav-item-icon">
+                    <span class="material-symbols-outlined">insights</span>
+                    <span>Gráficos y Estadísticas</span>
+                </div>
+            </a>
             <a th:href="@{/reportes}"
                class="rs-nav-item"
                title="Reportes TXT"

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- 1. Encabezado de Página -->
+    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">Gráficos y Estadísticas del Inventario</h1>
+            <p class="text-muted mb-0" style="font-size: 0.92rem;">
+                Panel analítico interactivo con métricas de ventas, compras, rotación y salud de existencias en tiempo real
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" onclick="window.print()" class="btn btn-rs-outline btn-sm text-nowrap d-flex align-items-center gap-1 shadow-sm">
+                <span class="material-symbols-outlined" style="font-size: 18px;">print</span>
+                <span>Imprimir / PDF</span>
+            </button>
+            <a th:href="@{/reportes}" class="btn btn-rs-outline btn-sm text-nowrap d-flex align-items-center gap-1 shadow-sm">
+                <span class="material-symbols-outlined text-primary" style="font-size: 18px;">description</span>
+                <span>Descargar TXT</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. Barra de Filtro Temporal -->
+    <div class="rs-card mb-4 p-3 border shadow-sm bg-white">
+        <form th:action="@{/analisis}" method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label for="fechaInicio" class="form-label small fw-semibold text-secondary mb-1">
+                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 16px;">calendar_today</span>
+                    Fecha Desde:
+                </label>
+                <input type="date" id="fechaInicio" name="fechaInicio" class="form-control form-control-sm"
+                       th:value="${fechaInicio != null ? #temporals.format(fechaInicio, 'yyyy-MM-dd') : ''}"/>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label for="fechaFin" class="form-label small fw-semibold text-secondary mb-1">
+                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 16px;">event</span>
+                    Fecha Hasta:
+                </label>
+                <input type="date" id="fechaFin" name="fechaFin" class="form-control form-control-sm"
+                       th:value="${fechaFin != null ? #temporals.format(fechaFin, 'yyyy-MM-dd') : ''}"/>
+            </div>
+            <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-rs-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">filter_alt</span>
+                    <span>Filtrar</span>
+                </button>
+                <a th:if="${fechaInicio != null or fechaFin != null}"
+                   th:href="@{/analisis}"
+                   class="btn btn-sm btn-light border text-secondary"
+                   title="Quitar filtros y mostrar todo el histórico">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                </a>
+            </div>
+            <div class="col-12 col-lg-3 text-lg-end text-muted small pt-1">
+                <span class="badge bg-light text-secondary border px-2 py-1">
+                    <span class="material-symbols-outlined align-middle" style="font-size: 14px;">analytics</span>
+                    <span th:text="${analytics.totalTransacciones} + ' operaciones procesadas'">0 operaciones</span>
+                </span>
+            </div>
+        </form>
+        <div th:if="${fechaInicio != null or fechaFin != null}" class="mt-2 pt-2 border-top d-flex align-items-center gap-2 small text-muted">
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Filtro de fechas activo</span>
+            <span th:text="${'Analizando datos desde ' + (fechaInicio != null ? #temporals.format(fechaInicio, 'dd/MM/yyyy') : 'el inicio') + ' hasta ' + (fechaFin != null ? #temporals.format(fechaFin, 'dd/MM/yyyy') : 'hoy')}">Período</span>
+        </div>
+    </div>
+
+    <!-- 3. Cuadrícula de 4 Tarjetas KPI -->
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Ventas / Salidas -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Ventas / Salidas</span>
+                    <div class="rs-kpi-icon-badge" style="background-color: var(--rs-info-bg); color: var(--rs-info);">
+                        <span class="material-symbols-outlined">point_of_sale</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value" th:text="${'$' + #numbers.formatDecimal(analytics.totalVentasValor, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                <div class="rs-kpi-footer d-flex align-items-center gap-1 text-primary">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">trending_up</span>
+                    <span th:text="${analytics.totalVentasUnidades} + ' prendas vendidas / retiradas'">0 prendas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Compras / Entradas -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Compras / Entradas</span>
+                    <div class="rs-kpi-icon-badge">
+                        <span class="material-symbols-outlined">shopping_bag</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value" th:text="${'$' + #numbers.formatDecimal(analytics.totalComprasValor, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                <div class="rs-kpi-footer d-flex align-items-center gap-1 text-success">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">add_shopping_cart</span>
+                    <span th:text="${analytics.totalComprasUnidades} + ' prendas ingresadas'">0 prendas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Valoración de Inventario en Almacén -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Valor en Almacén</span>
+                    <div class="rs-kpi-icon-badge">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value" th:text="${'$' + #numbers.formatDecimal(analytics.valorInventarioActual, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                <div class="rs-kpi-footer text-muted">
+                    <span th:text="${analytics.totalProductos} + ' artículos activos'">0 artículos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Estado de Existencias -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Artículos con Bajo Stock</span>
+                    <div class="rs-kpi-icon-badge" style="background-color: var(--rs-danger-bg); color: var(--rs-danger-dark);">
+                        <span class="material-symbols-outlined">warning</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value text-danger" th:text="${analytics.totalBajoStock}">0</div>
+                <div class="rs-kpi-footer d-flex align-items-center gap-1 text-danger">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
+                    <span>Requieren reposición</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Fila Principal de Gráficos (Evolución Temporal + Distribución Categorías) -->
+    <div class="row g-4 mb-4">
+        <!-- Gráfico 1: Evolución Temporal de Entradas vs Salidas -->
+        <div class="col-12 col-xl-8">
+            <div class="rs-card h-100">
+                <div class="rs-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div>
+                        <h2 class="rs-card-title d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">monitoring</span>
+                            <span>Evolución de Movimientos de Inventario</span>
+                        </h2>
+                        <div class="text-muted small">Flujo de prendas que ingresaron y salieron a lo largo del tiempo</div>
+                    </div>
+                    <!-- Toggle entre unidades y montos ($) -->
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="btnModoUnidades" onclick="cambiarModoEvolucion('unidades')">Prendas (U)</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnModoMontos" onclick="cambiarModoEvolucion('montos')">Valor ($)</button>
+                    </div>
+                </div>
+                <div class="rs-card-body p-3 p-md-4">
+                    <div style="height: 310px; position: relative;">
+                        <canvas id="chartEvolucion"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico 2: Distribución por Categoría (Doughnut) -->
+        <div class="col-12 col-xl-4">
+            <div class="rs-card h-100">
+                <div class="rs-card-header">
+                    <h2 class="rs-card-title d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">pie_chart</span>
+                        <span>Stock por Categoría</span>
+                    </h2>
+                    <div class="text-muted small">Proporción de existencias en el catálogo</div>
+                </div>
+                <div class="rs-card-body p-3 p-md-4 d-flex flex-column justify-content-center">
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="chartCategorias"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Fila Secundaria de Gráficos (Top Productos + Tipos de Operación) -->
+    <div class="row g-4 mb-4">
+        <!-- Gráfico 3: Top Prendas con Mayor Rotación / Salidas -->
+        <div class="col-12 col-lg-6">
+            <div class="rs-card h-100">
+                <div class="rs-card-header">
+                    <h2 class="rs-card-title d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">leaderboard</span>
+                        <span>Prendas Más Demandadas (Top Salidas / Ventas)</span>
+                    </h2>
+                    <div class="text-muted small">Artículos con mayor volumen de rotación en el período</div>
+                </div>
+                <div class="rs-card-body p-3 p-md-4">
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="chartTopProductos"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico 4: Desglose por Tipo de Movimiento -->
+        <div class="col-12 col-lg-6">
+            <div class="rs-card h-100">
+                <div class="rs-card-header">
+                    <h2 class="rs-card-title d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">donut_small</span>
+                        <span>Operaciones por Tipo de Transacción</span>
+                    </h2>
+                    <div class="text-muted small">Desglose de compras, ventas, devoluciones y ajustes</div>
+                </div>
+                <div class="rs-card-body p-3 p-md-4">
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="chartTipos"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Gráfico 5: Comparativa de Stock Actual vs Stock Mínimo -->
+    <div class="rs-card mb-4 shadow-sm">
+        <div class="rs-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h2 class="rs-card-title d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-danger">rule</span>
+                    <span>Salud del Stock: Existencia Actual vs Nivel Mínimo</span>
+                </h2>
+                <div class="text-muted small">Comparación visual para prevenir roturas de inventario antes de alcanzar el punto de reorden</div>
+            </div>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
+                Alerta si Stock Actual &le; Mínimo
+            </span>
+        </div>
+        <div class="rs-card-body p-3 p-md-4">
+            <div style="height: 290px; position: relative;">
+                <canvas id="chartStockVsMin"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Tabla Resumen Detallado por Prenda -->
+    <div class="rs-card shadow-sm mb-4">
+        <div class="rs-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h2 class="rs-card-title d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">table_chart</span>
+                    <span>Resumen Operativo y Financiero por Artículo</span>
+                </h2>
+                <div class="text-muted small" style="font-size: 0.85rem;">Auditoría consolidada de entradas, salidas y valuación del inventario</div>
+            </div>
+            <span class="badge bg-light text-dark border font-monospace" th:text="${#lists.size(analytics.itemsResumen)} + ' prendas registradas'">0 prendas</span>
+        </div>
+        <div class="table-responsive">
+            <table class="rs-table">
+                <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th>Categoría</th>
+                    <th class="text-end">Entradas (+)</th>
+                    <th class="text-end">Salidas (-)</th>
+                    <th class="text-end">Stock Actual</th>
+                    <th class="text-end">Stock Mínimo</th>
+                    <th class="text-end">Costo Unit.</th>
+                    <th class="text-end">Valor Total</th>
+                    <th class="text-center">Estado</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(analytics.itemsResumen)}">
+                    <td colspan="10" class="text-center py-4 text-muted">No se encontraron artículos en el inventario.</td>
+                </tr>
+                <tr th:each="it : ${analytics.itemsResumen}">
+                    <td>
+                        <span class="rs-code-tag" th:text="${it.codigo}">CAM-001</span>
+                    </td>
+                    <td class="fw-semibold text-dark text-truncate" style="max-width: 220px;" th:text="${it.descripcion}">Camisa</td>
+                    <td>
+                        <span class="badge bg-light text-secondary border" th:text="${it.categoria}">Camisas</span>
+                    </td>
+                    <td class="text-end font-monospace text-success fw-bold" th:text="${'+' + it.totalEntradas}">+0</td>
+                    <td class="text-end font-monospace text-danger fw-bold" th:text="${'-' + it.totalSalidas}">-0</td>
+                    <td class="text-end font-monospace fw-bold"
+                        th:classappend="${it.stockActual <= it.stockMinimo} ? 'text-danger' : 'text-dark'"
+                        th:text="${it.stockActual}">10</td>
+                    <td class="text-end font-monospace text-muted" th:text="${it.stockMinimo}">5</td>
+                    <td class="text-end font-monospace" th:text="${'$' + #numbers.formatDecimal(it.costoUnitario, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                    <td class="text-end font-monospace fw-bold text-dark" th:text="${'$' + #numbers.formatDecimal(it.valorInventario, 1, 'COMMA', 2, 'POINT')}">$0.00</td>
+                    <td class="text-center">
+                        <span th:if="${it.stockActual <= it.stockMinimo}" class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                            <span class="material-symbols-outlined align-middle" style="font-size: 14px;">warning</span>
+                            <span>Bajo Stock</span>
+                        </span>
+                        <span th:unless="${it.stockActual <= it.stockMinimo}" class="badge bg-success-subtle text-success border border-success-subtle">
+                            <span class="material-symbols-outlined align-middle" style="font-size: 14px;">check_circle</span>
+                            <span>Óptimo</span>
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Inyección de Biblioteca Chart.js (local con fallback a CDN dinámico) -->
+    <script th:src="@{/js/chart.umd.min.js}"></script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            var cdnScript = document.createElement('script');
+            cdnScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            cdnScript.async = false;
+            document.head.appendChild(cdnScript);
+        }
+    </script>
+
+<!-- Inicialización y Configuración de los Gráficos Interactivos de RopaStore -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    function initAnalyticsCharts() {
+        if (typeof Chart === 'undefined') {
+            setTimeout(initAnalyticsCharts, 60);
+            return;
+        }
+
+        // Paleta oficial de marca RopaStore (sin amarillos, coherente con la identidad visual)
+        const COLOR_PRIMARY = '#198754';
+        const COLOR_PRIMARY_LIGHT = 'rgba(25, 135, 84, 0.12)';
+        const COLOR_SECONDARY = '#0284C7';
+        const COLOR_SECONDARY_LIGHT = 'rgba(2, 132, 199, 0.12)';
+        const COLOR_DANGER = '#EF4444';
+        const COLOR_DANGER_LIGHT = 'rgba(239, 68, 68, 0.12)';
+        const COLOR_INDIGO = '#6366F1';
+        const COLOR_PURPLE = '#8B5CF6';
+        const COLOR_TEAL = '#0D9488';
+        const COLOR_SLATE = '#64748B';
+        const COLOR_GRID = '#F1F5F9';
+
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = '#64748B';
+
+        // 1. Datos para Gráfico 1: Evolución Temporal
+        const labelsFechas = /*[[${analytics.labelsFechas}]]*/ [];
+        const dataEntradasUnidades = /*[[${analytics.unidadesEntrada}]]*/ [];
+        const dataSalidasUnidades = /*[[${analytics.unidadesSalida}]]*/ [];
+        const dataComprasMontos = /*[[${analytics.montoCompras}]]*/ [];
+        const dataVentasMontos = /*[[${analytics.montoVentas}]]*/ [];
+
+        let modoEvolucion = 'unidades'; // 'unidades' o 'montos'
+
+        const ctxEvolucion = document.getElementById('chartEvolucion').getContext('2d');
+        const chartEvolucion = new Chart(ctxEvolucion, {
+            type: 'line',
+            data: {
+                labels: labelsFechas,
+                datasets: [
+                    {
+                        label: 'Entradas (Reposición)',
+                        data: dataEntradasUnidades,
+                        borderColor: COLOR_PRIMARY,
+                        backgroundColor: COLOR_PRIMARY_LIGHT,
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: COLOR_PRIMARY,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Salidas (Ventas)',
+                        data: dataSalidasUnidades,
+                        borderColor: COLOR_SECONDARY,
+                        backgroundColor: COLOR_SECONDARY_LIGHT,
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: COLOR_SECONDARY,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Inter', sans-serif", weight: 600, size: 12 } }
+                    },
+                    tooltip: {
+                        titleFont: { family: "'Inter', sans-serif", size: 12, weight: '600' },
+                        bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                        callbacks: {
+                            label: function (ctx) {
+                                if (modoEvolucion === 'montos') {
+                                    return ctx.dataset.label + ': $' + Number(ctx.raw).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                }
+                                return ctx.dataset.label + ': ' + ctx.raw + ' prendas';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: "'Inter', sans-serif", size: 11 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: COLOR_GRID },
+                        ticks: {
+                            font: { family: "'Inter', sans-serif", size: 11 },
+                            callback: function (val) {
+                                if (modoEvolucion === 'montos') {
+                                    return '$' + val;
+                                }
+                                return val;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        window.cambiarModoEvolucion = function (nuevoModo) {
+            modoEvolucion = nuevoModo;
+            const btnU = document.getElementById('btnModoUnidades');
+            const btnM = document.getElementById('btnModoMontos');
+
+            if (nuevoModo === 'montos') {
+                btnU.classList.remove('active');
+                btnM.classList.add('active');
+                chartEvolucion.data.datasets[0].label = 'Inversión Compras ($)';
+                chartEvolucion.data.datasets[0].data = dataComprasMontos;
+                chartEvolucion.data.datasets[1].label = 'Ingresos Ventas ($)';
+                chartEvolucion.data.datasets[1].data = dataVentasMontos;
+            } else {
+                btnM.classList.remove('active');
+                btnU.classList.add('active');
+                chartEvolucion.data.datasets[0].label = 'Entradas (Reposición)';
+                chartEvolucion.data.datasets[0].data = dataEntradasUnidades;
+                chartEvolucion.data.datasets[1].label = 'Salidas (Ventas)';
+                chartEvolucion.data.datasets[1].data = dataSalidasUnidades;
+            }
+            chartEvolucion.update();
+        };
+
+        // 2. Gráfico 2: Categorías (Doughnut - sin amarillos)
+        const labelsCategorias = /*[[${analytics.labelsCategorias}]]*/ [];
+        const dataStockCategorias = /*[[${analytics.stockPorCategoria}]]*/ [];
+        const ctxCategorias = document.getElementById('chartCategorias').getContext('2d');
+        new Chart(ctxCategorias, {
+            type: 'doughnut',
+            data: {
+                labels: labelsCategorias,
+                datasets: [{
+                    data: dataStockCategorias,
+                    backgroundColor: [
+                        '#198754',
+                        '#0284C7',
+                        '#6366F1',
+                        '#8B5CF6',
+                        '#EC4899',
+                        '#0D9488',
+                        '#64748B'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Inter', sans-serif", size: 11 } }
+                    },
+                    tooltip: {
+                        titleFont: { family: "'Inter', sans-serif", size: 12 },
+                        bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                        callbacks: {
+                            label: function (ctx) {
+                                return ' ' + ctx.label + ': ' + ctx.raw + ' prendas';
+                            }
+                        }
+                    }
+                },
+                cutout: '68%'
+            }
+        });
+
+        // 3. Gráfico 3: Top Prendas Más Demandadas (Horizontal Bar)
+        const labelsTopProductos = /*[[${analytics.labelsTopProductos}]]*/ [];
+        const dataTopProductos = /*[[${analytics.cantidadesTopProductos}]]*/ [];
+        const ctxTop = document.getElementById('chartTopProductos').getContext('2d');
+        new Chart(ctxTop, {
+            type: 'bar',
+            data: {
+                labels: labelsTopProductos,
+                datasets: [{
+                    label: 'Unidades Salidas / Vendidas',
+                    data: dataTopProductos,
+                    backgroundColor: COLOR_SECONDARY,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        titleFont: { family: "'Inter', sans-serif", size: 12 },
+                        bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                        callbacks: {
+                            label: function (ctx) {
+                                return ' ' + ctx.raw + ' prendas retiradas';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: COLOR_GRID },
+                        ticks: { font: { family: "'Inter', sans-serif", size: 11 } }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { family: "'Inter', sans-serif", size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // 4. Gráfico 4: Tipos de Transacción (Bar - sin amarillos)
+        const labelsTipos = /*[[${analytics.labelsTipos}]]*/ [];
+        const dataTipos = /*[[${analytics.cantidadesPorTipo}]]*/ [];
+        const ctxTipos = document.getElementById('chartTipos').getContext('2d');
+        new Chart(ctxTipos, {
+            type: 'bar',
+            data: {
+                labels: labelsTipos,
+                datasets: [{
+                    label: 'Prendas Involucradas',
+                    data: dataTipos,
+                    backgroundColor: [
+                        '#198754', // Compra
+                        '#22C55E', // Devolucion cliente
+                        '#4ADE80', // Ajuste positivo
+                        '#0284C7', // Venta
+                        '#8B5CF6', // Devolucion proveedor
+                        '#EF4444', // Defecto
+                        '#F43F5E'  // Ajuste negativo
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        titleFont: { family: "'Inter', sans-serif", size: 12 },
+                        bodyFont: { family: "'Inter', sans-serif", size: 12 }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { family: "'Inter', sans-serif", size: 10 },
+                            maxRotation: 35,
+                            minRotation: 20
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: COLOR_GRID },
+                        ticks: { font: { family: "'Inter', sans-serif", size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // 5. Gráfico 5: Stock Actual vs Mínimo
+        const labelsStockVsMin = /*[[${analytics.labelsStockVsMin}]]*/ [];
+        const dataStockActual = /*[[${analytics.stockActualVsMin}]]*/ [];
+        const dataStockMinimo = /*[[${analytics.stockMinimoVsMin}]]*/ [];
+        const ctxStockVsMin = document.getElementById('chartStockVsMin').getContext('2d');
+
+        // Color condicional: si stock actual <= mínimo, rojo peligro, sino verde
+        const coloresActual = dataStockActual.map((val, idx) => {
+            const min = dataStockMinimo[idx] || 0;
+            return val <= min ? COLOR_DANGER : COLOR_PRIMARY;
+        });
+
+        new Chart(ctxStockVsMin, {
+            type: 'bar',
+            data: {
+                labels: labelsStockVsMin,
+                datasets: [
+                    {
+                        label: 'Existencia Actual',
+                        data: dataStockActual,
+                        backgroundColor: coloresActual,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Stock Mínimo Requerido',
+                        data: dataStockMinimo,
+                        backgroundColor: '#CBD5E1',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, boxWidth: 8, font: { family: "'Inter', sans-serif", weight: 600, size: 12 } }
+                    },
+                    tooltip: {
+                        titleFont: { family: "'Inter', sans-serif", size: 12, weight: '600' },
+                        bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                        callbacks: {
+                            label: function (ctx) {
+                                return ctx.dataset.label + ': ' + ctx.raw + ' prendas';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: "'Inter', sans-serif", size: 11 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: COLOR_GRID },
+                        ticks: { font: { family: "'Inter', sans-serif", size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAnalyticsCharts);
+    } else {
+        initAnalyticsCharts();
+    }
+    /*]]>*/
+</script>
+</div>
+</body>
+</html>
+
