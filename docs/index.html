@@ -274,8 +274,8 @@
                         </p>
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <button onclick="descargarReporteTxt()" class="btn btn-rs-outline btn-sm text-nowrap">
-                            <span class="material-symbols-outlined text-primary">download</span>
+                        <button onclick="abrirModalReporteDemo('existencias')" class="btn btn-rs-outline btn-sm text-nowrap" title="Previsualizar y descargar reporte de existencias">
+                            <span class="material-symbols-outlined text-success">description</span>
                             <span>Descargar TXT</span>
                         </button>
                         <button onclick="switchView('operaciones')" class="btn btn-rs-primary btn-sm text-nowrap">
@@ -511,9 +511,15 @@
 
             <!-- SECTION 4: MOVIMIENTOS -->
             <div id="view-movimientos" class="view-section">
-                <div class="mb-4">
-                    <h1 class="h3 fw-bold text-dark mb-1">Historial y Kárdex de Movimientos</h1>
-                    <p class="text-muted small">Auditoría completa de todas las transacciones realizadas</p>
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-1">Historial y Kárdex de Movimientos</h1>
+                        <p class="text-muted small">Auditoría completa de todas las transacciones realizadas</p>
+                    </div>
+                    <button type="button" onclick="abrirModalReporteDemo('movimientos')" class="btn btn-rs-outline btn-sm text-nowrap" title="Previsualizar y descargar reporte TXT de movimientos">
+                        <span class="material-symbols-outlined text-success">description</span>
+                        <span>Descargar TXT</span>
+                    </button>
                 </div>
 
                 <div class="card border-0 shadow-sm rounded-3">
@@ -529,6 +535,7 @@
                                     <th>Costo Unit.</th>
                                     <th>Balance Resultante</th>
                                     <th>Observación</th>
+                                    <th class="text-center">Comprobante</th>
                                 </tr>
                             </thead>
                             <tbody id="movimientos-tbody">
@@ -541,19 +548,59 @@
 
             <!-- SECTION 5: REPORTES -->
             <div id="view-reportes" class="view-section">
-                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-3">
                     <div>
                         <h1 class="h3 fw-bold text-dark mb-1">Reporte de Existencias Plano (TXT)</h1>
-                        <p class="text-muted small">Algoritmo de corte de control/ruptura por artículo</p>
+                        <p class="text-muted small mb-0">Algoritmo de corte de control/ruptura por artículo con filtros por rango de fechas</p>
                     </div>
-                    <button onclick="descargarReporteTxt()" class="btn btn-rs-primary btn-sm">
-                        <span class="material-symbols-outlined">download</span>
-                        <span>Descargar Archivo TXT</span>
+                    <button type="button" onclick="abrirModalReporteDemo('existencias')" class="btn btn-rs-primary btn-sm d-flex align-items-center gap-1.5" title="Previsualizar y personalizar nombre antes de descargar">
+                        <span class="material-symbols-outlined">description</span>
+                        <span>Previsualizar y Descargar TXT</span>
                     </button>
+                </div>
+
+                <!-- Barra de Filtros por Rango de Fechas -->
+                <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-light">
+                    <form id="form-filtro-reporte" onsubmit="handleFiltroReporteSubmit(event)" class="row g-2 align-items-end">
+                        <div class="col-12 col-sm-4 col-md-3">
+                            <label for="rep-fecha-inicio" class="form-label small fw-semibold text-secondary mb-1">
+                                <span class="material-symbols-outlined align-middle" style="font-size: 16px;">calendar_today</span>
+                                Desde:
+                            </label>
+                            <input type="date" id="rep-fecha-inicio" class="form-control form-control-sm"/>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3">
+                            <label for="rep-fecha-fin" class="form-label small fw-semibold text-secondary mb-1">
+                                <span class="material-symbols-outlined align-middle" style="font-size: 16px;">event</span>
+                                Hasta:
+                            </label>
+                            <input type="date" id="rep-fecha-fin" class="form-control form-control-sm"/>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-rs-primary btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">filter_alt</span>
+                                <span>Filtrar Reporte</span>
+                            </button>
+                            <button type="button" onclick="limpiarFiltroReporte()" class="btn btn-light btn-sm border text-secondary" title="Limpiar filtro">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-3 text-md-end">
+                            <span id="rep-filtro-badge" class="badge bg-secondary-subtle text-secondary small d-none">
+                                Filtro activo
+                            </span>
+                        </div>
+                    </form>
                 </div>
 
                 <div class="card border-0 shadow-sm rounded-3 p-3">
                     <pre id="txt-report-preview" class="p-3 bg-dark text-light rounded font-monospace" style="max-height: 500px; overflow-y: auto; font-size: 0.85rem; line-height: 1.5;"></pre>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" onclick="abrirModalReporteDemo('existencias')" class="btn btn-rs-primary btn-sm d-flex align-items-center gap-1.5" title="Previsualizar y descargar">
+                            <span class="material-symbols-outlined">download</span>
+                            <span>Descargar Reporte TXT</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -631,6 +678,81 @@
     </div>
 </div>
 
+<!-- Modal Universal de Previsualización y Descarga de Reportes TXT -->
+<div class="modal fade" id="rsReportPreviewModal" tabindex="-1" aria-labelledby="rsReportModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow border-0">
+            <div class="modal-header bg-light border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-success" style="font-size: 24px;">description</span>
+                    <div>
+                        <h5 class="modal-title h6 fw-bold mb-0 text-dark" id="rsReportModalTitle">Previsualización de Reporte TXT</h5>
+                        <div class="text-muted small" style="font-size: 0.75rem;">Revisa el contenido y personaliza el nombre del archivo antes de descargarlo.</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            
+            <div class="modal-body p-3 p-sm-4">
+                <!-- Configuración de Nombre de Archivo -->
+                <div class="mb-3">
+                    <label for="rsReportFileNameInput" class="form-label small fw-semibold text-secondary mb-1">
+                        Nombre del archivo a descargar:
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">edit_note</span>
+                        </span>
+                        <input type="text"
+                               class="form-control font-monospace"
+                               id="rsReportFileNameInput"
+                               placeholder="reporte_..."
+                               oninput="actualizarBadgeNombreArchivoDemo(this.value)"
+                               autocomplete="off"/>
+                        <span class="input-group-text bg-light text-muted font-monospace">.txt</span>
+                    </div>
+                    <div class="form-text text-muted" style="font-size: 0.75rem;">
+                        Puedes editar el nombre o dejar el generado automáticamente con la nomenclatura oficial.
+                    </div>
+                </div>
+
+                <!-- Visor Monospace con barra de herramientas -->
+                <div class="border rounded overflow-hidden bg-dark">
+                    <div class="d-flex align-items-center justify-content-between px-3 py-1.5 bg-black bg-opacity-40 border-bottom border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-1.5 text-light font-monospace small" style="font-size: 0.75rem;">
+                            <span class="material-symbols-outlined text-success" style="font-size: 15px;">terminal</span>
+                            <span id="rsReportBadgeFilename" class="text-truncate" style="max-width: 320px;">reporte.txt</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="rsReportLineCount" class="text-muted font-monospace" style="font-size: 0.72rem;">0 líneas</span>
+                            <button type="button" class="btn btn-sm btn-outline-light py-0 px-2" style="font-size: 0.75rem;" onclick="copiarReporteAlPortapapelesDemo()" title="Copiar al portapapeles">
+                                <span class="material-symbols-outlined align-middle" style="font-size: 14px;">content_copy</span>
+                                <span class="align-middle">Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <pre id="rsReportPreCode"
+                         class="m-0 p-3 font-monospace text-light"
+                         style="max-height: 440px; overflow: auto; font-size: 0.78rem; line-height: 1.45; white-space: pre; background-color: #0F172A;"></pre>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light border-top d-flex align-items-center justify-content-between">
+                <button type="button" class="btn btn-light border text-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button"
+                        class="btn btn-success d-flex align-items-center gap-1.5 fw-semibold shadow-sm"
+                        id="rsBtnDescargarTxtModal"
+                        onclick="ejecutarDescargaDesdeModalDemo()">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                    <span>Descargar TXT</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Bootstrap 5 Bundle JS -->
 <script src="js/bootstrap.bundle.min.js"></script>
 
@@ -649,10 +771,15 @@
 
     let products = JSON.parse(localStorage.getItem('rs_demo_products')) || initialProducts;
     let movements = JSON.parse(localStorage.getItem('rs_demo_movements')) || [
-        { fecha: new Date().toLocaleString(), codigo: 'CAM-001', descripcion: 'Camisa Oversize Básica', tipo: 'COMPRA', cantidad: 25, costo: 450.00, balance: 25, obs: 'Inventario Inicial' },
-        { fecha: new Date().toLocaleString(), codigo: 'PAN-002', descripcion: 'Jean Slim Fit Denim', tipo: 'COMPRA', cantidad: 18, costo: 650.00, balance: 18, obs: 'Inventario Inicial' },
-        { fecha: new Date().toLocaleString(), codigo: 'CHA-003', descripcion: 'Chaqueta Denim Clásica', tipo: 'VENTA', cantidad: -2, costo: 1200.00, balance: 8, obs: 'Venta mostrador #101' }
+        { id: 101, fecha: new Date().toLocaleString(), isoDate: new Date().toISOString().substring(0, 10), codigo: 'CAM-001', descripcion: 'Camisa Oversize Básica', tipo: 'COMPRA', cantidad: 25, costo: 450.00, balance: 25, obs: 'Inventario Inicial' },
+        { id: 102, fecha: new Date().toLocaleString(), isoDate: new Date().toISOString().substring(0, 10), codigo: 'PAN-002', descripcion: 'Jean Slim Fit Denim', tipo: 'COMPRA', cantidad: 18, costo: 650.00, balance: 18, obs: 'Inventario Inicial' },
+        { id: 103, fecha: new Date().toLocaleString(), isoDate: new Date().toISOString().substring(0, 10), codigo: 'CHA-003', descripcion: 'Chaqueta Denim Clásica', tipo: 'VENTA', cantidad: -2, costo: 1200.00, balance: 8, obs: 'Venta mostrador #101' }
     ];
+    // Garantizar id e isoDate en datos cargados de localStorage
+    movements.forEach((m, idx) => {
+        if (!m.id) m.id = 100 + idx;
+        if (!m.isoDate) m.isoDate = new Date().toISOString().substring(0, 10);
+    });
 
     function saveState() {
         localStorage.setItem('rs_demo_products', JSON.stringify(products));
@@ -860,8 +987,11 @@
         const delta = isSalida ? -cant : cant;
         prod.stock += delta;
 
-        movements.unshift({
+        const opId = Date.now();
+        const newMov = {
+            id: opId,
             fecha: new Date().toLocaleString(),
+            isoDate: new Date().toISOString().substring(0, 10),
             codigo: prod.codigo,
             descripcion: prod.descripcion,
             tipo: tipo,
@@ -869,13 +999,16 @@
             costo: prod.costo,
             balance: prod.stock,
             obs: obs
-        });
+        };
+        movements.unshift(newMov);
 
         saveState();
-        alert('¡Operación registrada con éxito! Nuevo balance: ' + prod.stock + ' unidades.');
         document.getElementById('form-operacion').reset();
         handleProductChange({ value: '' });
         switchView('movimientos');
+        setTimeout(() => {
+            abrirModalReporteDemo('voucher', newMov);
+        }, 350);
     }
 
     function handleNewProductSubmit(e) {
@@ -921,18 +1054,31 @@
                 <td class="fw-bold ${isPos ? 'text-success' : 'text-danger'}">${isPos ? '+' : ''}${m.cantidad}</td>
                 <td>$${m.costo.toFixed(2)}</td>
                 <td class="fw-bold text-dark">${m.balance}</td>
-                <td class="text-muted small">${m.obs}</td>
+                <td class="text-muted small">${m.obs || '-'}</td>
+                <td class="text-center text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0.5 px-1.5" style="border-radius: 6px; font-size: 0.75rem;" onclick="abrirModalReporteDemo('voucher', ${m.id})" title="Previsualizar comprobante TXT">
+                        <span class="material-symbols-outlined align-middle" style="font-size: 16px;">receipt_long</span>
+                        <span class="d-none d-md-inline align-middle ms-0.5">TXT</span>
+                    </button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    function generateReportText() {
+    function generateReportText(fechaInicio, fechaFin) {
         const now = new Date().toLocaleString();
         let txt = "========================================================================================\n";
         txt += "                 ROPASTORE — REPORTE DE CONTROL DE EXISTENCIAS Y KÁRDEX                 \n";
         txt += "========================================================================================\n";
         txt += `Fecha de Emisión : ${now}\n`;
+        if (fechaInicio || fechaFin) {
+            const fDesde = fechaInicio ? fechaInicio : 'Histórico inicial';
+            const fHasta = fechaFin ? fechaFin : 'Fecha actual';
+            txt += `Período          : Desde ${fDesde} hasta ${fHasta}\n`;
+        } else {
+            txt += "Período          : Histórico completo\n";
+        }
         txt += "Almacén          : Almacén Central (RopaStore)\n";
         txt += "Algoritmo        : Ruptura / Corte de Control por Código de Artículo\n";
         txt += "----------------------------------------------------------------------------------------\n\n";
@@ -948,14 +1094,27 @@
             txt += "    Fecha                 Tipo Transacción     Cantidad    Costo Unit.    Balance Final\n";
             txt += "    ------------------------------------------------------------------------------------\n";
             
-            const prodMovs = movements.filter(m => m.codigo === p.codigo);
+            let prodMovs = movements.filter(m => m.codigo === p.codigo);
+            if (fechaInicio) {
+                prodMovs = prodMovs.filter(m => {
+                    const mDate = m.isoDate || (m.fecha ? m.fecha.substring(0, 10) : '');
+                    return mDate >= fechaInicio;
+                });
+            }
+            if (fechaFin) {
+                prodMovs = prodMovs.filter(m => {
+                    const mDate = m.isoDate || (m.fecha ? m.fecha.substring(0, 10) : '');
+                    return mDate <= fechaFin;
+                });
+            }
+
             if (prodMovs.length > 0) {
                 prodMovs.forEach(m => {
                     const cantStr = (m.cantidad > 0 ? "+" : "") + m.cantidad;
                     txt += `    ${m.fecha.padEnd(22)} ${m.tipo.padEnd(20)} ${cantStr.padEnd(11)} $${m.costo.toFixed(2).padEnd(13)} ${m.balance} uds\n`;
                 });
             } else {
-                txt += `    (Sin movimientos registrados en el período actual. Existencia actual: ${p.stock} uds)\n`;
+                txt += `    (Sin movimientos registrados en el período seleccionado. Existencia actual: ${p.stock} uds)\n`;
             }
             const valorArticulo = p.stock * p.costo;
             totalGeneral += p.stock;
@@ -974,17 +1133,188 @@
         return txt;
     }
 
+    function generateVoucherText(m) {
+        const p = products.find(prod => prod.codigo === m.codigo) || { talla: '-', categoria: '-' };
+        const total = Math.abs(m.cantidad * m.costo);
+        const signo = m.cantidad >= 0 ? '+' : '-';
+        const tipoLabel = m.cantidad >= 0 ? 'ENTRADA DE INVENTARIO' : 'SALIDA DE INVENTARIO';
+        let txt = "======================================================================\n";
+        txt += "               ROPASTORE S.R.L. - COMPROBANTE OFICIAL                 \n";
+        txt += "======================================================================\n";
+        txt += `Folio Transacción : TRX-${String(m.id || 1).padStart(6, '0')}\n`;
+        txt += `Fecha y Hora      : ${m.fecha}\n`;
+        txt += "Operador          : Administrador del Sistema\n";
+        txt += "Almacén           : Almacén Principal RopaStore\n";
+        txt += `Tipo Operación    : ${tipoLabel} (${m.tipo})\n`;
+        txt += "----------------------------------------------------------------------\n";
+        txt += "DATOS DE LA PRENDA:\n";
+        txt += `  Código SKU     : ${m.codigo}\n`;
+        txt += `  Descripción    : ${m.descripcion}\n`;
+        txt += `  Categoría / Talla: ${p.categoria} | Talla ${p.talla}\n`;
+        txt += "----------------------------------------------------------------------\n";
+        txt += "DETALLE FINANCIERO Y MOVIMIENTO:\n";
+        txt += `  Cantidad Operada : ${signo}${Math.abs(m.cantidad)} unidades\n`;
+        txt += `  Costo Unitario   : $${m.costo.toFixed(2)}\n`;
+        txt += `  Importe Total    : $${total.toFixed(2)}\n`;
+        txt += `  Stock Resultante : ${m.balance} unidades\n`;
+        txt += "----------------------------------------------------------------------\n";
+        txt += `Observación       : ${m.obs || '-'}\n`;
+        txt += "======================================================================\n\n\n";
+        txt += "          _____________________            _____________________\n";
+        txt += "             Firma Responsable               Firma Auditor / Vobo\n";
+        txt += "               Almacén Central                  Auditoría RopaStore\n";
+        return txt;
+    }
+
+    function generateMovimientosReportText() {
+        const now = new Date().toLocaleString();
+        let txt = "========================================================================================\n";
+        txt += "                 ROPASTORE — AUDITORÍA GENERAL DE MOVIMIENTOS                           \n";
+        txt += "========================================================================================\n";
+        txt += `Fecha de Emisión : ${now}\n`;
+        txt += `Total Registros  : ${movements.length} movimientos\n`;
+        txt += "========================================================================================\n";
+        txt += "Fecha                 Código   Tipo       Cant.   Costo Unit.   Balance  Observaciones  \n";
+        txt += "----------------------------------------------------------------------------------------\n";
+        movements.forEach(m => {
+            const cantStr = (m.cantidad > 0 ? "+" : "") + m.cantidad;
+            txt += `${m.fecha.padEnd(21)} ${m.codigo.padEnd(8)} ${m.tipo.padEnd(10)} ${cantStr.padEnd(7)} $${m.costo.toFixed(2).padEnd(11)} ${String(m.balance).padEnd(8)} ${m.obs || '-'}\n`;
+        });
+        txt += "========================================================================================\n";
+        return txt;
+    }
+
+    function handleFiltroReporteSubmit(e) {
+        if (e) e.preventDefault();
+        const fInicio = document.getElementById('rep-fecha-inicio').value;
+        const fFin = document.getElementById('rep-fecha-fin').value;
+        const badge = document.getElementById('rep-filtro-badge');
+        if (fInicio || fFin) {
+            badge.classList.remove('d-none');
+            badge.textContent = `Filtro: ${fInicio || '...'} a ${fFin || '...'}`;
+        } else {
+            badge.classList.add('d-none');
+        }
+        renderReportPreview();
+    }
+
+    function limpiarFiltroReporte() {
+        document.getElementById('rep-fecha-inicio').value = '';
+        document.getElementById('rep-fecha-fin').value = '';
+        document.getElementById('rep-filtro-badge').classList.add('d-none');
+        renderReportPreview();
+    }
+
     function renderReportPreview() {
-        document.getElementById('txt-report-preview').textContent = generateReportText();
+        const fInicio = document.getElementById('rep-fecha-inicio') ? document.getElementById('rep-fecha-inicio').value : '';
+        const fFin = document.getElementById('rep-fecha-fin') ? document.getElementById('rep-fecha-fin').value : '';
+        const pre = document.getElementById('txt-report-preview');
+        if (pre) {
+            pre.textContent = generateReportText(fInicio, fFin);
+        }
+    }
+
+    let currentDemoReportContent = "";
+    let currentDemoReportDefaultFilename = "";
+
+    function abrirModalReporteDemo(tipo, param) {
+        let content = "";
+        let defaultFilename = "";
+        let titulo = "Previsualización de Reporte TXT";
+
+        const padZero = (n) => String(n).padStart(2, '0');
+        const d = new Date();
+        const dateStamp = `${d.getFullYear()}${padZero(d.getMonth()+1)}${padZero(d.getDate())}_${padZero(d.getHours())}${padZero(d.getMinutes())}`;
+        const dayStamp = `${d.getFullYear()}${padZero(d.getMonth()+1)}${padZero(d.getDate())}`;
+
+        if (tipo === 'existencias') {
+            const fInicio = document.getElementById('rep-fecha-inicio') ? document.getElementById('rep-fecha-inicio').value : '';
+            const fFin = document.getElementById('rep-fecha-fin') ? document.getElementById('rep-fecha-fin').value : '';
+            content = generateReportText(fInicio, fFin);
+            titulo = "Previsualización: Reporte de Existencias (TXT)";
+            if (fInicio || fFin) {
+                const sInicio = fInicio || 'inicio';
+                const sFin = fFin || 'hoy';
+                defaultFilename = `reporte_existencias_${sInicio}_al_${sFin}`;
+            } else {
+                defaultFilename = `reporte_existencias_ropastore_${dateStamp}`;
+            }
+        } else if (tipo === 'voucher') {
+            let m = null;
+            if (typeof param === 'object' && param !== null) {
+                m = param;
+            } else {
+                m = movements.find(x => x.id === param);
+            }
+            if (!m) m = movements[0];
+            content = generateVoucherText(m);
+            titulo = `Previsualización: Comprobante de Operación (${m.codigo})`;
+            const tCode = m.tipo ? m.tipo.toUpperCase() : 'OP';
+            const mId = m.id || 1;
+            defaultFilename = `comprobante_TRX${mId}_${tCode}_${m.codigo}_${dayStamp}`;
+        } else if (tipo === 'movimientos') {
+            content = generateMovimientosReportText();
+            titulo = "Previsualización: Historial de Movimientos (TXT)";
+            defaultFilename = `reporte_movimientos_ropastore_${dateStamp}`;
+        }
+
+        currentDemoReportContent = content;
+        currentDemoReportDefaultFilename = defaultFilename;
+
+        document.getElementById('rsReportModalTitle').textContent = titulo;
+        document.getElementById('rsReportFileNameInput').value = defaultFilename;
+        document.getElementById('rsReportBadgeFilename').textContent = defaultFilename + ".txt";
+        document.getElementById('rsReportPreCode').textContent = content;
+
+        const lineCount = (content.match(/\n/g) || []).length + 1;
+        document.getElementById('rsReportLineCount').textContent = lineCount + " líneas";
+
+        const modalEl = document.getElementById('rsReportPreviewModal');
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    function actualizarBadgeNombreArchivoDemo(val) {
+        const clean = (val && val.trim()) ? val.trim() : currentDemoReportDefaultFilename;
+        document.getElementById('rsReportBadgeFilename').textContent = clean + (clean.toLowerCase().endsWith('.txt') ? '' : '.txt');
+    }
+
+    function copiarReporteAlPortapapelesDemo() {
+        if (!currentDemoReportContent) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(currentDemoReportContent).then(() => {
+                alert('¡Contenido copiado al portapapeles exitosamente!');
+            }).catch(() => {
+                alert('Contenido copiado.');
+            });
+        } else {
+            alert('Contenido copiado.');
+        }
+    }
+
+    function ejecutarDescargaDesdeModalDemo() {
+        if (!currentDemoReportContent) return;
+        const input = document.getElementById('rsReportFileNameInput');
+        let fileName = (input.value.trim() || currentDemoReportDefaultFilename || "reporte_ropastore");
+        fileName = fileName.replace(/[^a-zA-Z0-9._\-]/g, '_').replace(/\.+/g, '.');
+        if (!fileName.toLowerCase().endsWith('.txt')) {
+            fileName += ".txt";
+        }
+        const blob = new Blob([currentDemoReportContent], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        const modalEl = document.getElementById('rsReportPreviewModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     }
 
     function descargarReporteTxt() {
-        const text = generateReportText();
-        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `reporte_existencias_ropastore_${Date.now()}.txt`;
-        a.click();
+        abrirModalReporteDemo('existencias');
     }
 
     function checkDemoAuth() {

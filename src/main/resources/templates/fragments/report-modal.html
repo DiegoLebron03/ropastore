@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="reportModal">
+    <!-- Modal Universal de Previsualización y Descarga de Reportes TXT -->
+    <div class="modal fade" id="rsReportPreviewModal" tabindex="-1" aria-labelledby="rsReportModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow border-0">
+                <div class="modal-header bg-light border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-success" style="font-size: 24px;">description</span>
+                        <div>
+                            <h5 class="modal-title h6 fw-bold mb-0 text-dark" id="rsReportModalTitle">Previsualización de Reporte TXT</h5>
+                            <div class="text-muted small" style="font-size: 0.75rem;">Revisa el contenido y personaliza el nombre del archivo antes de descargarlo.</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                
+                <div class="modal-body p-3 p-sm-4">
+                    <!-- Configuración de Nombre de Archivo -->
+                    <div class="mb-3">
+                        <label for="rsReportFileNameInput" class="form-label small fw-semibold text-secondary mb-1">
+                            Nombre del archivo a descargar:
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">edit_note</span>
+                            </span>
+                            <input type="text"
+                                   class="form-control font-monospace"
+                                   id="rsReportFileNameInput"
+                                   placeholder="reporte_..."
+                                   oninput="actualizarBadgeNombreArchivo(this.value)"
+                                   autocomplete="off"/>
+                            <span class="input-group-text bg-light text-muted font-monospace">.txt</span>
+                        </div>
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">
+                            Puedes editar el nombre o dejar el generado automáticamente con la nomenclatura oficial.
+                        </div>
+                    </div>
+
+                    <!-- Visor Monospace con barra de herramientas -->
+                    <div class="border rounded overflow-hidden bg-dark">
+                        <div class="d-flex align-items-center justify-content-between px-3 py-1.5 bg-black bg-opacity-40 border-bottom border-secondary border-opacity-25">
+                            <div class="d-flex align-items-center gap-1.5 text-light font-monospace small" style="font-size: 0.75rem;">
+                                <span class="material-symbols-outlined text-success" style="font-size: 15px;">terminal</span>
+                                <span id="rsReportBadgeFilename" class="text-truncate" style="max-width: 320px;">reporte.txt</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span id="rsReportLineCount" class="text-muted font-monospace" style="font-size: 0.72rem;">0 líneas</span>
+                                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2" style="font-size: 0.75rem;" onclick="copiarReporteAlPortapapeles()" title="Copiar al portapapeles">
+                                    <span class="material-symbols-outlined align-middle" style="font-size: 14px;">content_copy</span>
+                                    <span class="align-middle">Copiar</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="rsReportSpinner" class="text-center py-5 d-none">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Cargando reporte...</span>
+                            </div>
+                            <div class="text-light small mt-2 font-monospace">Cargando previsualización...</div>
+                        </div>
+                        <pre id="rsReportPreCode"
+                             class="m-0 p-3 font-monospace text-light"
+                             style="max-height: 440px; overflow: auto; font-size: 0.78rem; line-height: 1.45; white-space: pre; background-color: #0F172A;"></pre>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light border-top d-flex align-items-center justify-content-between">
+                    <button type="button" class="btn btn-light border text-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button"
+                            class="btn btn-success d-flex align-items-center gap-1.5 fw-semibold shadow-sm"
+                            id="rsBtnDescargarTxtModal"
+                            onclick="ejecutarDescargaDesdeModal()">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                        <span>Descargar TXT</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Controlador del Modal Universal de Reportes -->
+    <script>
+        var currentReportContent = "";
+        var currentReportDefaultFilename = "";
+
+        function abrirModalReporte(previewUrl) {
+            var modalEl = document.getElementById('rsReportPreviewModal');
+            if (!modalEl) return;
+
+            var bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            var preEl = document.getElementById('rsReportPreCode');
+            var spinnerEl = document.getElementById('rsReportSpinner');
+            var inputEl = document.getElementById('rsReportFileNameInput');
+            var badgeEl = document.getElementById('rsReportBadgeFilename');
+            var titleEl = document.getElementById('rsReportModalTitle');
+            var linesEl = document.getElementById('rsReportLineCount');
+
+            preEl.textContent = "";
+            preEl.classList.add('d-none');
+            spinnerEl.classList.remove('d-none');
+            bsModal.show();
+
+            fetch(previewUrl, { headers: { 'Accept': 'application/json' } })
+                .then(function(response) {
+                    if (!response.ok) throw new Error("Error al consultar el reporte");
+                    return response.json();
+                })
+                .then(function(data) {
+                    currentReportContent = data.contenido || "";
+                    var baseFilename = data.defaultFilename || "reporte";
+                    if (baseFilename.toLowerCase().endsWith('.txt')) {
+                        baseFilename = baseFilename.substring(0, baseFilename.length - 4);
+                    }
+                    currentReportDefaultFilename = baseFilename;
+
+                    titleEl.textContent = data.titulo || "Previsualización de Reporte TXT";
+                    inputEl.value = currentReportDefaultFilename;
+                    badgeEl.textContent = currentReportDefaultFilename + ".txt";
+                    preEl.textContent = currentReportContent;
+
+                    var lineCount = (currentReportContent.match(/\n/g) || []).length + 1;
+                    linesEl.textContent = lineCount + " líneas";
+
+                    spinnerEl.classList.add('d-none');
+                    preEl.classList.remove('d-none');
+                })
+                .catch(function(err) {
+                    spinnerEl.classList.add('d-none');
+                    preEl.classList.remove('d-none');
+                    preEl.textContent = "Error al cargar la previsualización: " + err.message;
+                });
+        }
+
+        function abrirModalReporteConTexto(contenido, defaultName, titulo) {
+            var modalEl = document.getElementById('rsReportPreviewModal');
+            if (!modalEl) return;
+
+            var bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            var preEl = document.getElementById('rsReportPreCode');
+            var spinnerEl = document.getElementById('rsReportSpinner');
+            var inputEl = document.getElementById('rsReportFileNameInput');
+            var badgeEl = document.getElementById('rsReportBadgeFilename');
+            var titleEl = document.getElementById('rsReportModalTitle');
+            var linesEl = document.getElementById('rsReportLineCount');
+
+            var baseFilename = defaultName || "reporte_existencias";
+            if (baseFilename.toLowerCase().endsWith('.txt')) {
+                baseFilename = baseFilename.substring(0, baseFilename.length - 4);
+            }
+            currentReportContent = contenido || "";
+            currentReportDefaultFilename = baseFilename;
+
+            titleEl.textContent = titulo || "Previsualización de Reporte TXT";
+            inputEl.value = currentReportDefaultFilename;
+            badgeEl.textContent = currentReportDefaultFilename + ".txt";
+            preEl.textContent = currentReportContent;
+
+            var lineCount = (currentReportContent.match(/\n/g) || []).length + 1;
+            linesEl.textContent = lineCount + " líneas";
+
+            spinnerEl.classList.add('d-none');
+            preEl.classList.remove('d-none');
+            bsModal.show();
+        }
+
+        function actualizarBadgeNombreArchivo(val) {
+            var badgeEl = document.getElementById('rsReportBadgeFilename');
+            var clean = (val && val.trim()) ? val.trim() : currentReportDefaultFilename;
+            badgeEl.textContent = clean + (clean.toLowerCase().endsWith('.txt') ? '' : '.txt');
+        }
+
+        function copiarReporteAlPortapapeles() {
+            if (!currentReportContent) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(currentReportContent).then(function() {
+                    alert("¡Contenido copiado al portapapeles exitosamente!");
+                }).catch(function() {
+                    fallbackCopiarTexto(currentReportContent);
+                });
+            } else {
+                fallbackCopiarTexto(currentReportContent);
+            }
+        }
+
+        function fallbackCopiarTexto(text) {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            alert("¡Contenido copiado al portapapeles!");
+        }
+
+        function ejecutarDescargaDesdeModal() {
+            if (!currentReportContent) return;
+            var inputEl = document.getElementById('rsReportFileNameInput');
+            var fileName = inputEl.value.trim() || currentReportDefaultFilename || "reporte_ropastore";
+            
+            // Sanitizar nombre de archivo básico
+            fileName = fileName.replace(/[^a-zA-Z0-9._\-]/g, '_').replace(/\.+/g, '.');
+            if (!fileName.toLowerCase().endsWith('.txt')) {
+                fileName += ".txt";
+            }
+
+            var blob = new Blob([currentReportContent], { type: 'text/plain;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            var modalEl = document.getElementById('rsReportPreviewModal');
+            var modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        }
+    </script>
+</div>
+</body>
+</html>
+

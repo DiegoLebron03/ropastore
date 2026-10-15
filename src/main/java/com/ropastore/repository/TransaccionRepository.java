@@ -83,7 +83,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, Long>,
         }
         Specification<Transaccion> spec = (root, q, cb) -> {
             if (q.getResultType() != Long.class && q.getResultType() != long.class) {
-                root.fetch("producto", jakarta.persistence.criteria.JoinType.LEFT);
+                root.fetch("producto", jakarta.persistence.criteria.JoinType.INNER);
             }
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             if (productoId != null) {

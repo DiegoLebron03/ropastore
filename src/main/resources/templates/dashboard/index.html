@@ -15,10 +15,13 @@
             </p>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <a th:href="@{/reportes/existencias/descargar}" class="btn btn-rs-outline btn-sm text-nowrap">
-                <span class="material-symbols-outlined text-primary">download</span>
+            <button type="button"
+                    class="btn btn-rs-outline btn-sm text-nowrap"
+                    onclick="abrirModalReporte('/reportes/existencias/preview')"
+                    title="Previsualizar y descargar reporte de existencias">
+                <span class="material-symbols-outlined text-primary">description</span>
                 <span>Descargar TXT</span>
-            </a>
+            </button>
             <a th:href="@{/inventario/operaciones}" class="btn btn-rs-primary btn-sm text-nowrap">
                 <span class="material-symbols-outlined">add</span>
                 <span>Nueva Operación</span>

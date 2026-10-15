@@ -12,10 +12,47 @@
                 Proceso oficial de generación de archivo de texto plano con ruptura de control por artículo
             </p>
         </div>
-        <a th:href="@{/reportes/existencias/descargar}" class="btn btn-rs-primary text-nowrap shadow-sm">
-            <span class="material-symbols-outlined">download</span>
+        <button type="button"
+                class="btn btn-rs-primary text-nowrap shadow-sm d-flex align-items-center gap-1.5"
+                th:data-url="@{/reportes/existencias/preview(fechaInicio=${fechaInicio}, fechaFin=${fechaFin})}"
+                onclick="abrirModalReporte(this.getAttribute('data-url'))"
+                title="Previsualizar y configurar nombre antes de descargar">
+            <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
             <span>Descargar Archivo TXT</span>
-        </a>
+        </button>
+    </div>
+
+    <!-- Formulario de Filtro por Rango de Fechas -->
+    <div class="rs-card mb-4 p-3 border shadow-sm bg-white">
+        <form th:action="@{/reportes}" method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-sm-6 col-md-4">
+                <label for="fechaInicio" class="form-label small fw-semibold text-secondary mb-1">
+                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 16px;">calendar_today</span>
+                    Fecha Desde:
+                </label>
+                <input type="date" class="form-control form-control-sm" id="fechaInicio" name="fechaInicio" th:value="${fechaInicio}"/>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4">
+                <label for="fechaFin" class="form-label small fw-semibold text-secondary mb-1">
+                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 16px;">event</span>
+                    Fecha Hasta:
+                </label>
+                <input type="date" class="form-control form-control-sm" id="fechaFin" name="fechaFin" th:value="${fechaFin}"/>
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-rs-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">filter_alt</span>
+                    <span>Filtrar Reporte</span>
+                </button>
+                <a th:href="@{/reportes}" th:if="${fechaInicio != null or fechaFin != null}" class="btn btn-sm btn-light border text-secondary" title="Limpiar fechas y ver histórico completo">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                </a>
+            </div>
+        </form>
+        <div th:if="${fechaInicio != null or fechaFin != null}" class="mt-2 pt-2 border-top d-flex align-items-center gap-2 small text-muted">
+            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Filtro de fechas activo</span>
+            <span th:text="${'Mostrando movimientos desde ' + (fechaInicio != null ? #temporals.format(fechaInicio, 'dd/MM/yyyy') : 'el inicio') + ' hasta ' + (fechaFin != null ? #temporals.format(fechaFin, 'dd/MM/yyyy') : 'hoy')}">Período</span>
+        </div>
     </div>
 
     <!-- Tarjeta Explicativa del Requisito de Ruptura de Control -->
@@ -40,16 +77,21 @@
         <div class="rs-card-header bg-dark text-white d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="d-flex align-items-center gap-2 min-w-0">
                 <span class="material-symbols-outlined text-success flex-shrink-0" style="font-size: 20px;">terminal</span>
-                <span class="font-monospace small fw-semibold text-truncate" style="max-width: 240px;">reporte_existencias_ropastore.txt</span>
-                <span class="badge bg-secondary d-none d-sm-inline-block" style="font-size: 0.72rem;">Previsualización</span>
+                <span class="font-monospace small fw-semibold text-truncate" style="max-width: 320px;" th:text="${defaultFilename}">reporte_existencias_ropastore.txt</span>
+                <span class="badge bg-secondary d-none d-sm-inline-block" style="font-size: 0.72rem;">Previsualización en Pantalla</span>
             </div>
-            <a th:href="@{/reportes/existencias/descargar}" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1 text-nowrap">
+            <button type="button"
+                    class="btn btn-sm btn-outline-light d-flex align-items-center gap-1 text-nowrap"
+                    th:data-url="@{/reportes/existencias/preview(fechaInicio=${fechaInicio}, fechaFin=${fechaFin})}"
+                    onclick="abrirModalReporte(this.getAttribute('data-url'))"
+                    title="Previsualizar y personalizar nombre antes de descargar">
                 <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
                 <span>Descargar</span>
-            </a>
+            </button>
         </div>
         <div class="rs-card-body p-0" style="max-width: 100%; min-width: 0; overflow: hidden;">
-            <pre class="m-0 p-3 p-sm-4 font-monospace small bg-dark text-light"
+            <pre id="mainReportPre"
+                 class="m-0 p-3 p-sm-4 font-monospace small bg-dark text-light"
                  style="max-height: 600px; line-height: 1.45; font-size: clamp(0.72rem, 1.8vw, 0.82rem); white-space: pre; max-width: 100%; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;"
                  th:text="${reporteTexto}">
 ========================================================================================================

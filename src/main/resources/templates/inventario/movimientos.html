@@ -13,12 +13,14 @@
             </p>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <a th:href="@{/reportes/movimientos/descargar(productoId=${filtroProductoId}, tipo=${filtroTipo}, fechaInicio=${filtroFechaInicio}, fechaFin=${filtroFechaFin})}"
+            <button type="button"
+               th:data-url="@{/reportes/movimientos/preview(productoId=${filtroProductoId}, tipo=${filtroTipo}, fechaInicio=${filtroFechaInicio}, fechaFin=${filtroFechaFin})}"
+               onclick="abrirModalReporte(this.getAttribute('data-url'))"
                class="btn btn-rs-outline btn-sm text-nowrap"
-               th:title="${filtroProductoId != null or filtroTipo != null or filtroFechaInicio != null or filtroFechaFin != null ? 'Descargar reporte TXT con los filtros aplicados' : 'Descargar reporte TXT de todos los movimientos'}">
-                <span class="material-symbols-outlined text-primary">download</span>
+               th:title="${filtroProductoId != null or filtroTipo != null or filtroFechaInicio != null or filtroFechaFin != null ? 'Previsualizar y descargar reporte TXT con filtros' : 'Previsualizar y descargar reporte TXT de movimientos'}">
+                <span class="material-symbols-outlined text-success">description</span>
                 <span th:text="${filtroProductoId != null or filtroTipo != null or filtroFechaInicio != null or filtroFechaFin != null ? 'Descargar TXT (Filtrado)' : 'Descargar TXT'}">Descargar TXT</span>
-            </a>
+            </button>
             <a th:href="@{/inventario/operaciones}" class="btn btn-rs-primary btn-sm text-nowrap">
                 <span class="material-symbols-outlined">add</span>
                 <span>Nueva Operación</span>
@@ -32,15 +34,17 @@
             <span class="material-symbols-outlined text-success" style="font-size: 30px;">receipt_long</span>
             <div>
                 <div class="fw-bold text-dark">¡Comprobante TXT individual generado exitosamente!</div>
-                <div class="small text-secondary">La descarga del comprobante oficial ha comenzado. Si no se inicia automáticamente, haz clic en el botón.</div>
+                <div class="small text-secondary">Puedes previsualizar el comprobante oficial y personalizar su nombre antes de descargarlo.</div>
             </div>
         </div>
-        <a th:href="@{/reportes/transacciones/{id}/descargar(id=${descargarReporteTransaccionId})}"
+        <button type="button"
            id="btn-descarga-voucher-auto"
+           th:data-url="@{/reportes/transacciones/{id}/preview(id=${descargarReporteTransaccionId})}"
+           onclick="abrirModalReporte(this.getAttribute('data-url'))"
            class="btn btn-success btn-sm text-nowrap d-flex align-items-center gap-1.5 shadow-sm flex-shrink-0">
-            <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
-            <span>Descargar Comprobante TXT</span>
-        </a>
+            <span class="material-symbols-outlined" style="font-size: 18px;">receipt_long</span>
+            <span>Previsualizar y Descargar Comprobante TXT</span>
+        </button>
     </div>
     <script th:if="${descargarReporteTransaccionId != null}">
         document.addEventListener('DOMContentLoaded', function() {
@@ -162,13 +166,15 @@
                     <td class="text-end font-monospace fw-bold fs-6 text-dark text-nowrap" th:text="${m.balanceResultante}">30</td>
                     <td class="small text-muted d-none d-xxl-table-cell text-truncate" style="max-width: 160px;" th:text="${m.observacion != null ? m.observacion : '-'}">-</td>
                     <td class="text-center text-nowrap">
-                        <a th:href="@{/reportes/transacciones/{id}/descargar(id=${m.id})}"
+                        <button type="button"
+                            th:data-url="@{/reportes/transacciones/{id}/preview(id=${m.id})}"
+                            onclick="abrirModalReporte(this.getAttribute('data-url'))"
                             class="btn btn-sm btn-outline-secondary py-0.5 px-1.5"
                             style="border-radius: 6px; font-size: 0.75rem;"
-                            title="Descargar comprobante TXT de este movimiento">
+                            title="Previsualizar y descargar comprobante TXT">
                             <span class="material-symbols-outlined align-middle" style="font-size: 16px;">receipt_long</span>
                             <span class="d-none d-md-inline align-middle ms-0.5">TXT</span>
-                        </a>
+                        </button>
                     </td>
                 </tr>
                 </tbody>

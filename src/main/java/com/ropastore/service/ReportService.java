@@ -32,10 +32,18 @@ public class ReportService {
     }
 
     /**
-     * Genera el contenido del reporte de existencias en formato de texto plano (TXT)
-     * implementando el algoritmo clásico de ruptura de control por artículo.
+     * Genera el reporte completo histórico de existencias con ruptura de control por artículo.
      */
     public String generarReporteExistenciasTexto() {
+        return generarReporteExistenciasTexto(null, null);
+    }
+
+    /**
+     * Genera el contenido del reporte de existencias en formato de texto plano (TXT)
+     * implementando el algoritmo clásico de ruptura de control por artículo,
+     * permitiendo opcionalmente filtrar transacciones por rango de fechas.
+     */
+    public String generarReporteExistenciasTexto(LocalDate fechaInicio, LocalDate fechaFin) {
         StringBuilder sb = new StringBuilder();
 
         // 1. Encabezado institucional
@@ -44,12 +52,22 @@ public class ReportService {
         sb.append("                         REPORTE DE EXISTENCIAS Y MOVIMIENTOS POR ARTÍCULO                              \n");
         sb.append(SEPARADOR);
         sb.append(String.format("Fecha de emisión : %s\n", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
-        sb.append("Criterio         : Ruptura de control por artículo con histórico de transacciones\n");
+        if (fechaInicio != null || fechaFin != null) {
+            String fIni = fechaInicio != null ? fechaInicio.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "Inicio histórico";
+            String fFin = fechaFin != null ? fechaFin.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "Hoy";
+            sb.append(String.format("Período          : Desde %s hasta %s\n", fIni, fFin));
+        } else {
+            sb.append("Período          : Histórico completo sin restricción de fecha\n");
+        }
+        sb.append("Criterio         : Ruptura de control por artículo con trazabilidad de transacciones\n");
         sb.append(SEPARADOR).append("\n");
 
-        // 2. Obtener todos los productos y todas las transacciones ordenadas
+        LocalDateTime inicio = fechaInicio != null ? fechaInicio.atStartOfDay() : null;
+        LocalDateTime fin = fechaFin != null ? fechaFin.plusDays(1).atStartOfDay().minusNanos(1) : null;
+
+        // 2. Obtener productos y transacciones ordenadas para la ruptura de control
         List<Producto> productos = productoRepository.findAllByOrderByCodigoAsc();
-        List<Transaccion> todasTransacciones = transaccionRepository.findAllForReporteTxt();
+        List<Transaccion> todasTransacciones = transaccionRepository.findWithFiltersForReporteTxt(null, null, inicio, fin);
 
         // Agrupar transacciones por ID de producto manteniendo el orden cronológico
         Map<Long, List<Transaccion>> transaccionesPorProducto = new LinkedHashMap<>();
@@ -65,6 +83,7 @@ public class ReportService {
 
         int totalArticulos = productos.size();
         int totalUnidadesGlobal = 0;
+        int totalMovimientosEnPeriodo = todasTransacciones.size();
 
         // 3. Iteración con ruptura de control por artículo
         for (Producto producto : productos) {
@@ -86,7 +105,11 @@ public class ReportService {
 
             int balanceAcumulado = 0;
             if (movimientos.isEmpty()) {
-                sb.append("   (Sin movimientos registrados para este artículo)\n");
+                if (fechaInicio != null || fechaFin != null) {
+                    sb.append("   (Sin movimientos registrados en el período seleccionado)\n");
+                } else {
+                    sb.append("   (Sin movimientos registrados para este artículo)\n");
+                }
             } else {
                 for (Transaccion m : movimientos) {
                     balanceAcumulado = m.getBalanceResultante();
@@ -119,6 +142,7 @@ public class ReportService {
         sb.append("                                              RESUMEN GLOBAL                                            \n");
         sb.append(SEPARADOR);
         sb.append(String.format("Total de artículos catalogados : %d\n", totalArticulos));
+        sb.append(String.format("Total de movimientos en reporte: %d transacciones\n", totalMovimientosEnPeriodo));
         sb.append(String.format("Total de unidades en inventario: %d unidades físicas\n", totalUnidadesGlobal));
         sb.append(SEPARADOR);
         sb.append("                                          FIN DEL REPORTE OFICIAL                                       \n");
@@ -131,7 +155,11 @@ public class ReportService {
      * Retorna los bytes del reporte de existencias codificados en UTF-8 listos para descargar por HTTP.
      */
     public byte[] generarReporteExistenciasBytes() {
-        return generarReporteExistenciasTexto().getBytes(StandardCharsets.UTF_8);
+        return generarReporteExistenciasBytes(null, null);
+    }
+
+    public byte[] generarReporteExistenciasBytes(LocalDate fechaInicio, LocalDate fechaFin) {
+        return generarReporteExistenciasTexto(fechaInicio, fechaFin).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -194,6 +222,16 @@ public class ReportService {
 
     public byte[] generarComprobanteTransaccionBytes(Transaccion t) {
         return generarComprobanteTransaccionTexto(t).getBytes(StandardCharsets.UTF_8);
+    }
+
+    public String generarComprobanteTransaccionTexto(Long id) {
+        Transaccion t = transaccionRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("No se encontró la transacción con ID " + id));
+        return generarComprobanteTransaccionTexto(t);
+    }
+
+    public byte[] generarComprobanteTransaccionBytes(Long id) {
+        return generarComprobanteTransaccionTexto(id).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -355,5 +393,69 @@ public class ReportService {
         LocalDate filtroFechaFin
     ) {
         return generarReporteMovimientosFiltradosTexto(productoId, tipo, inicio, fin, filtroFechaInicio, filtroFechaFin).getBytes(StandardCharsets.UTF_8);
+    }
+
+    // ===================================================================
+    // Nomenclaturas automáticas predeterminadas y sanitización de nombres
+    // ===================================================================
+
+    public String generarNombreArchivoExistencias(LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaInicio != null && fechaFin != null) {
+            return String.format("reporte_existencias_%s_al_%s.txt", fechaInicio, fechaFin);
+        } else if (fechaInicio != null) {
+            return String.format("reporte_existencias_desde_%s.txt", fechaInicio);
+        } else if (fechaFin != null) {
+            return String.format("reporte_existencias_hasta_%s.txt", fechaFin);
+        } else {
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+            return "reporte_existencias_ropastore_" + timestamp + ".txt";
+        }
+    }
+
+    public String generarNombreArchivoComprobante(Transaccion t) {
+        String timestamp = t.getFecha().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String codigoProd = t.getProducto() != null ? t.getProducto().getCodigo() : "PROD";
+        String tipoStr = t.getTipo() != null ? t.getTipo().name() : "MOV";
+        return String.format("comprobante_TRX%06d_%s_%s_%s.txt", t.getId(), tipoStr, codigoProd, timestamp);
+    }
+
+    public String generarNombreArchivoMovimientos(Long productoId, TipoTransaccion tipo, LocalDate fechaInicio, LocalDate fechaFin) {
+        StringBuilder sb = new StringBuilder("reporte_movimientos_");
+        if (productoId != null) {
+            Producto p = productoRepository.findById(productoId).orElse(null);
+            if (p != null) {
+                sb.append(p.getCodigo()).append("_");
+            }
+        }
+        if (tipo != null) {
+            sb.append(tipo.name()).append("_");
+        }
+        if (fechaInicio != null && fechaFin != null) {
+            sb.append(fechaInicio).append("_al_").append(fechaFin);
+        } else if (fechaInicio != null) {
+            sb.append("desde_").append(fechaInicio);
+        } else if (fechaFin != null) {
+            sb.append("hasta_").append(fechaFin);
+        } else {
+            sb.append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")));
+        }
+        sb.append(".txt");
+        return sb.toString();
+    }
+
+    public static String sanitizarNombreArchivo(String customName, String defaultName) {
+        if (customName == null || customName.isBlank()) {
+            return defaultName;
+        }
+        String clean = customName.trim()
+                .replaceAll("[^a-zA-Z0-9._\\-]", "_")
+                .replaceAll("\\.+", ".");
+        if (clean.isBlank() || clean.equals(".txt")) {
+            return defaultName;
+        }
+        if (!clean.toLowerCase().endsWith(".txt")) {
+            clean += ".txt";
+        }
+        return clean;
     }
 }
