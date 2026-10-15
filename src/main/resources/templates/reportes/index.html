@@ -5,21 +5,11 @@
 <div th:fragment="mainBody">
 
     <!-- Encabezado -->
-    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
-        <div>
-            <h1 class="h3 fw-bold text-dark mb-1">Generación de Reportes TXT</h1>
-            <p class="text-muted mb-0" style="font-size: 0.92rem;">
-                Proceso oficial de generación de archivo de texto plano con ruptura de control por artículo
-            </p>
-        </div>
-        <button type="button"
-                class="btn btn-rs-primary text-nowrap shadow-sm d-flex align-items-center gap-1.5"
-                th:data-url="@{/reportes/existencias/preview(fechaInicio=${fechaInicio}, fechaFin=${fechaFin})}"
-                onclick="abrirModalReporte(this.getAttribute('data-url'))"
-                title="Previsualizar y configurar nombre antes de descargar">
-            <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
-            <span>Descargar Archivo TXT</span>
-        </button>
+    <div class="mb-4">
+        <h1 class="h3 fw-bold text-dark mb-1">Generación de Reportes TXT</h1>
+        <p class="text-muted mb-0" style="font-size: 0.92rem;">
+            Proceso oficial de generación de archivo de texto plano con ruptura de control por artículo
+        </p>
     </div>
 
     <!-- Formulario de Filtro por Rango de Fechas -->

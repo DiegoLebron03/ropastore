@@ -92,7 +92,6 @@ O con Maven:
 
 ```
 ropastore/
-├── docs/                       # Cliente web para despliegue en GitHub Pages
 ├── src/
 │   ├── main/
 │   │   ├── java/com/ropastore/
