@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- Encabezado -->
+    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">Historial de Movimientos de Inventario</h1>
+            <p class="text-muted mb-0" style="font-size: 0.92rem;">
+                Auditoría cronológica de todas las entradas, salidas y balances de la tienda
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a th:href="@{/reportes/movimientos/descargar(productoId=${filtroProductoId}, tipo=${filtroTipo}, fechaInicio=${filtroFechaInicio}, fechaFin=${filtroFechaFin})}"
+               class="btn btn-rs-outline btn-sm text-nowrap"
+               th:title="${filtroProductoId != null or filtroTipo != null or filtroFechaInicio != null or filtroFechaFin != null ? 'Descargar reporte TXT con los filtros aplicados' : 'Descargar reporte TXT de todos los movimientos'}">
+                <span class="material-symbols-outlined text-primary">download</span>
+                <span th:text="${filtroProductoId != null or filtroTipo != null or filtroFechaInicio != null or filtroFechaFin != null ? 'Descargar TXT (Filtrado)' : 'Descargar TXT'}">Descargar TXT</span>
+            </a>
+            <a th:href="@{/inventario/operaciones}" class="btn btn-rs-primary btn-sm text-nowrap">
+                <span class="material-symbols-outlined">add</span>
+                <span>Nueva Operación</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Notificación y Descarga Automática de Comprobante Individual de Transacción -->
+    <div th:if="${descargarReporteTransaccionId != null}" class="alert alert-success d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 p-3 rounded-3 shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-center gap-2.5">
+            <span class="material-symbols-outlined text-success" style="font-size: 30px;">receipt_long</span>
+            <div>
+                <div class="fw-bold text-dark">¡Comprobante TXT individual generado exitosamente!</div>
+                <div class="small text-secondary">La descarga del comprobante oficial ha comenzado. Si no se inicia automáticamente, haz clic en el botón.</div>
+            </div>
+        </div>
+        <a th:href="@{/reportes/transacciones/{id}/descargar(id=${descargarReporteTransaccionId})}"
+           id="btn-descarga-voucher-auto"
+           class="btn btn-success btn-sm text-nowrap d-flex align-items-center gap-1.5 shadow-sm flex-shrink-0">
+            <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+            <span>Descargar Comprobante TXT</span>
+        </a>
+    </div>
+    <script th:if="${descargarReporteTransaccionId != null}">
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('btn-descarga-voucher-auto');
+            if (btn) {
+                setTimeout(function() {
+                    btn.click();
+                }, 500);
+            }
+        });
+    </script>
+
+    <!-- Barra de Filtros -->
+    <div class="rs-card mb-4 p-3">
+        <form th:action="@{/inventario/movimientos}" method="get" class="row g-2 align-items-end">
+            <!-- Filtro Producto -->
+            <div class="col-12 col-md-6 col-lg-6 col-xl-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">Filtrar por Artículo</label>
+                <select name="productoId" class="form-select">
+                    <option value="">Todos los artículos</option>
+                    <option th:each="p : ${productos}"
+                            th:value="${p.id}"
+                            th:text="${'[' + p.codigo + '] ' + p.descripcion}"
+                            th:selected="${p.id == filtroProductoId}">[CAM-001] Camisa</option>
+                </select>
+            </div>
+
+            <!-- Filtro Tipo -->
+            <div class="col-12 col-md-6 col-lg-6 col-xl-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">Tipo de Movimiento</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    <option th:each="t : ${tipos}"
+                            th:value="${t}"
+                            th:text="${t.descripcion}"
+                            th:selected="${t == filtroTipo}">Compra</option>
+                </select>
+            </div>
+
+            <!-- Rango Fechas -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Desde</label>
+                <input type="date" name="fechaInicio" class="form-control" th:value="${filtroFechaInicio}"/>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Hasta</label>
+                <input type="date" name="fechaFin" class="form-control" th:value="${filtroFechaFin}"/>
+            </div>
+
+            <div class="col-12 col-md-4 col-lg-4 col-xl-2 d-flex gap-2">
+                <button type="submit" class="btn btn-rs-primary flex-grow-1 justify-content-center text-nowrap" title="Aplicar filtros">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                    <span>Filtrar</span>
+                </button>
+                <a th:href="@{/inventario/movimientos}" class="btn btn-rs-outline flex-shrink-0" title="Limpiar filtros">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Movimientos (Contenedor rs-card idéntico al Dashboard) -->
+    <div class="rs-card shadow-sm mb-4">
+        <div class="rs-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h2 class="rs-card-title d-flex align-items-center gap-2" style="font-size: 0.95rem;">
+                <span class="material-symbols-outlined text-primary">history</span>
+                <span>Registro de Movimientos</span>
+            </h2>
+            <span class="badge bg-light text-secondary border font-monospace" th:text="${movimientos != null ? #lists.size(movimientos) + ' transacciones' : '0 transacciones'}">0 transacciones</span>
+        </div>
+        <div class="table-responsive">
+            <table class="rs-table">
+                <thead>
+                <tr>
+                    <th class="text-nowrap">Fecha / Hora</th>
+                    <th>Artículo</th>
+                    <th>Tipo Operación</th>
+                    <th class="text-end text-nowrap">Cantidad</th>
+                    <th class="text-end text-nowrap d-none d-xl-table-cell">Costo Unit.</th>
+                    <th class="text-end text-nowrap d-none d-xl-table-cell">Total Operación</th>
+                    <th class="text-end text-nowrap">Balance Posterior</th>
+                    <th class="d-none d-xxl-table-cell">Observaciones</th>
+                    <th class="text-center text-nowrap" style="width: 50px;">Comprobante</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(movimientos)}">
+                    <td colspan="9" class="text-center py-5 text-muted">
+                        <span class="material-symbols-outlined text-secondary mb-2" style="font-size: 36px;">history_toggle_off</span>
+                        <div class="fw-semibold">No se encontraron movimientos registrados</div>
+                        <p class="small text-muted mb-0">Utilice el botón "Nueva Operación" para registrar una entrada o salida.</p>
+                    </td>
+                </tr>
+                <tr th:each="m : ${movimientos}">
+                    <td class="text-muted small text-nowrap" th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}">01/09/2026</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rs-product-thumb rs-product-thumb-sm" style="width: 32px; height: 32px; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px; overflow: hidden; flex-shrink: 0; border-radius: 6px;">
+                                <img th:if="${m.producto.hasImagen()}" th:src="@{${m.producto.imagenUrl}}" th:alt="${m.producto.descripcion}" class="rs-product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+                                <div th:unless="${m.producto.hasImagen()}" class="rs-product-placeholder">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">apparel</span>
+                                </div>
+                            </div>
+                            <a th:href="@{/productos/{id}(id=${m.producto.id})}" class="text-decoration-none fw-semibold text-dark text-truncate" style="max-width: 170px;">
+                                <span class="rs-code-tag me-1 text-nowrap" th:text="${m.producto.codigo}">CAM-001</span>
+                                <span th:text="${m.producto.descripcion}">Camisa</span>
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <span th:if="${m.isEntrada()}" class="rs-badge-in text-nowrap" th:text="${m.tipo.descripcion}">Compra</span>
+                        <span th:if="${m.isSalida()}" class="rs-badge-out text-nowrap" th:text="${m.tipo.descripcion}">Venta</span>
+                    </td>
+                    <td class="text-end fw-bold font-monospace text-nowrap"
+                        th:classappend="${m.isEntrada()} ? 'text-success' : 'text-danger'"
+                        th:text="${(m.isEntrada() ? '+' : '-') + m.cantidad}">+30</td>
+                    <td class="text-end text-muted font-monospace text-nowrap d-none d-xl-table-cell" th:text="${'$' + #numbers.formatDecimal(m.costoUnitario, 1, 'COMMA', 2, 'POINT')}">$850.00</td>
+                    <td class="text-end fw-semibold text-dark font-monospace text-nowrap d-none d-xl-table-cell" th:text="${'$' + #numbers.formatDecimal(m.getTotalOperacion(), 1, 'COMMA', 2, 'POINT')}">$25,500.00</td>
+                    <td class="text-end font-monospace fw-bold fs-6 text-dark text-nowrap" th:text="${m.balanceResultante}">30</td>
+                    <td class="small text-muted d-none d-xxl-table-cell text-truncate" style="max-width: 160px;" th:text="${m.observacion != null ? m.observacion : '-'}">-</td>
+                    <td class="text-center text-nowrap">
+                        <a th:href="@{/reportes/transacciones/{id}/descargar(id=${m.id})}"
+                            class="btn btn-sm btn-outline-secondary py-0.5 px-1.5"
+                            style="border-radius: 6px; font-size: 0.75rem;"
+                            title="Descargar comprobante TXT de este movimiento">
+                            <span class="material-symbols-outlined align-middle" style="font-size: 16px;">receipt_long</span>
+                            <span class="d-none d-md-inline align-middle ms-0.5">TXT</span>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>RopaStore — Inventario Inteligente (GitHub Pages Demo)</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    
+    <!-- RopaStore Official Theme CSS -->
+    <link rel="stylesheet" href="css/ropastore.css?v=2.2"/>
+    <style>
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+<div class="rs-layout" id="rs-layout-root">
+    <!-- Backdrop para dispositivos móviles -->
+    <div class="rs-sidebar-backdrop" id="rsSidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="rs-sidebar select-none">
+        <div class="d-flex flex-column flex-grow-1 overflow-auto">
+            <!-- Brand Header -->
+            <div class="rs-brand d-flex align-items-center justify-content-between" onclick="toggleSidebar()" role="button" title="Plegar / Desplegar menú lateral">
+                <div class="d-flex align-items-center gap-2 text-decoration-none text-dark flex-grow-1 min-w-0" style="cursor: pointer;">
+                    <img src="images/logo.png" alt="RopaStore Logo"/>
+                    <div class="rs-brand-text">
+                        <span class="rs-brand-title">RopaStore</span>
+                        <span class="rs-brand-subtitle">Inventario Inteligente</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-light border d-lg-none p-1 text-muted" type="button" onclick="event.stopPropagation(); closeMobileSidebar()" aria-label="Cerrar menú">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+                </button>
+            </div>
+
+            <!-- Grupo Operaciones -->
+            <div class="rs-nav-group-title">Operaciones</div>
+            <nav class="d-flex flex-column">
+                <a href="#dashboard" onclick="switchView('dashboard', event)" class="rs-nav-item active" id="nav-dashboard" title="Dashboard">
+                    <div class="rs-nav-item-icon">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span>Dashboard</span>
+                    </div>
+                    <span class="badge rounded-pill bg-success-subtle text-success font-monospace" style="font-size: 0.7rem;">Live</span>
+                </a>
+
+                <a href="#productos" onclick="switchView('productos', event)" class="rs-nav-item" id="nav-productos" title="Productos">
+                    <div class="rs-nav-item-icon">
+                        <span class="material-symbols-outlined">apparel</span>
+                        <span>Productos</span>
+                    </div>
+                </a>
+
+                <a href="#operaciones" onclick="switchView('operaciones', event)" class="rs-nav-item" id="nav-operaciones" title="Entradas / Salidas">
+                    <div class="rs-nav-item-icon">
+                        <span class="material-symbols-outlined">sync_alt</span>
+                        <span>Entradas / Salidas</span>
+                    </div>
+                </a>
+
+                <a href="#movimientos" onclick="switchView('movimientos', event)" class="rs-nav-item" id="nav-movimientos" title="Movimientos">
+                    <div class="rs-nav-item-icon">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        <span>Movimientos</span>
+                    </div>
+                </a>
+            </nav>
+
+            <!-- Grupo Reportes -->
+            <div class="rs-nav-group-title mt-3">Auditoría</div>
+            <nav class="d-flex flex-column">
+                <a href="#reportes" onclick="switchView('reportes', event)" class="rs-nav-item" id="nav-reportes" title="Reportes TXT">
+                    <div class="rs-nav-item-icon">
+                        <span class="material-symbols-outlined">summarize</span>
+                        <span>Reportes TXT</span>
+                    </div>
+                </a>
+            </nav>
+
+            <!-- User profile footer -->
+            <div class="mt-auto p-3 border-top d-flex align-items-center gap-2">
+                <img src="images/avatar.png" alt="Usuario" class="rounded-circle border" style="width: 32px; height: 32px; object-fit: cover;"/>
+                <div class="overflow-hidden">
+                    <div class="text-truncate fw-medium small">Diego Lebron</div>
+                    <div class="text-muted text-truncate" style="font-size: 0.75rem;">Administrador</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="rs-main-wrapper">
+        <!-- Topbar -->
+        <header class="rs-topbar">
+            <div class="d-flex align-items-center gap-2 gap-sm-3 min-w-0">
+                <button class="btn btn-sm btn-light border d-lg-none p-1.5 text-secondary flex-shrink-0" type="button" onclick="toggleSidebar()" aria-label="Abrir menú" title="Abrir menú">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">menu</span>
+                </button>
+                <div class="d-flex align-items-center gap-1.5 text-secondary overflow-hidden text-truncate" style="font-size: 0.88rem;">
+                    <span class="material-symbols-outlined text-muted flex-shrink-0" style="font-size: 18px;">store</span>
+                    <span class="fw-medium text-dark text-truncate d-none d-sm-inline">Almacén Central</span>
+                    <span class="text-muted d-none d-sm-inline">/</span>
+                    <span class="text-secondary fw-semibold text-truncate" id="topbar-current-section">Dashboard</span>
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 d-none d-md-inline-flex align-items-center gap-1 flex-shrink-0" style="font-size: 0.72rem;">
+                    <span class="bg-success rounded-circle d-inline-block" style="width: 6px; height: 6px;"></span>
+                    <span>Neon Cloud Postgres Ready</span>
+                </span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 gap-sm-3 flex-shrink-0">
+                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2.5 py-1 small">
+                    GitHub Pages Demo
+                </span>
+                <img src="images/avatar.png" alt="Avatar" class="rounded-circle border flex-shrink-0" style="width: 34px; height: 34px; object-fit: cover;"/>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <main class="rs-content p-3 p-md-4">
+            
+            <!-- SECTION 1: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h1 class="h3 fw-bold text-dark mb-0">Dashboard Operativo</h1>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">En Línea</span>
+                        </div>
+                        <p class="text-muted mb-0" style="font-size: 0.92rem;">
+                            Resumen general y estado de existencias del inventario en tiempo real
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button onclick="descargarReporteTxt()" class="btn btn-rs-outline btn-sm text-nowrap">
+                            <span class="material-symbols-outlined text-primary">download</span>
+                            <span>Descargar TXT</span>
+                        </button>
+                        <button onclick="switchView('operaciones')" class="btn btn-rs-primary btn-sm text-nowrap">
+                            <span class="material-symbols-outlined">add</span>
+                            <span>Nueva Operación</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Banner Informativo -->
+                <div class="alert alert-success border-success-subtle shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between p-3 mb-4 rounded-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 rounded bg-success bg-opacity-25 text-success">
+                            <span class="material-symbols-outlined">cloud_done</span>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">
+                                RopaStore desplegado con éxito en GitHub Pages
+                            </div>
+                            <div class="text-secondary small">
+                                Backend Java 21 / Spring Boot 3 y base de datos Neon PostgreSQL configurados en el repositorio principal.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cuadrícula de 4 Tarjetas KPI -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-secondary small fw-medium">Total Productos</span>
+                                <span class="material-symbols-outlined text-primary" style="font-size: 20px;">inventory_2</span>
+                            </div>
+                            <div class="h3 fw-bold text-dark mb-1" id="stat-total-prod">8</div>
+                            <div class="text-muted small">Prendas registradas en catálogo</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-secondary small fw-medium">Stock Bajo / Crítico</span>
+                                <span class="material-symbols-outlined text-warning" style="font-size: 20px;">warning</span>
+                            </div>
+                            <div class="h3 fw-bold text-warning mb-1" id="stat-bajo-stock">2</div>
+                            <div class="text-muted small">Requieren reabastecimiento</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-secondary small fw-medium">Movimientos Hoy</span>
+                                <span class="material-symbols-outlined text-info" style="font-size: 20px;">sync_alt</span>
+                            </div>
+                            <div class="h3 fw-bold text-dark mb-1" id="stat-mov-hoy">14</div>
+                            <div class="text-muted small">Entradas y salidas registradas</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-secondary small fw-medium">Valor Total Inventario</span>
+                                <span class="material-symbols-outlined text-success" style="font-size: 20px;">payments</span>
+                            </div>
+                            <div class="h3 fw-bold text-success mb-1" id="stat-valor-total">$67,820.00</div>
+                            <div class="text-muted small">Valuado al costo de adquisición</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Productos Críticos -->
+                <div class="card border-0 shadow-sm rounded-3 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                        <h2 class="h6 fw-bold text-dark mb-0">Prendas con Nivel de Stock Crítico</h2>
+                        <button onclick="switchView('productos')" class="btn btn-sm btn-link text-decoration-none">Ver todas</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Prenda</th>
+                                        <th>Categoría</th>
+                                        <th>Stock Actual</th>
+                                        <th>Stock Mínimo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="critical-products-tbody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: PRODUCTOS -->
+            <div id="view-productos" class="view-section">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-1">Catálogo de Productos</h1>
+                        <p class="text-muted mb-0 small">Gestión integral del catálogo, precios y niveles de stock</p>
+                    </div>
+                    <button class="btn btn-rs-primary btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#newProductModal">
+                        <span class="material-symbols-outlined">add</span>
+                        <span>Nuevo Producto</span>
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div class="card border-0 shadow-sm rounded-3 mb-4 p-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                                </span>
+                                <input type="text" id="filter-search" class="form-control border-start-0" placeholder="Buscar por código o descripción..." oninput="filterProducts()"/>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <select id="filter-category" class="form-select form-select-sm" onchange="filterProducts()">
+                                <option value="">Todas las categorías</option>
+                                <option value="CAMISAS">Camisas</option>
+                                <option value="PANTALONES">Pantalones</option>
+                                <option value="CHAQUETAS">Chaquetas</option>
+                                <option value="POLOS">Polos</option>
+                                <option value="VESTIDOS">Vestidos</option>
+                                <option value="ACCESORIOS">Accesorios</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <select id="filter-status" class="form-select form-select-sm" onchange="filterProducts()">
+                                <option value="">Todos los estados</option>
+                                <option value="ACTIVO">Activo</option>
+                                <option value="INACTIVO">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Productos -->
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Descripción</th>
+                                    <th>Categoría</th>
+                                    <th>Talla</th>
+                                    <th>Costo</th>
+                                    <th>Precio</th>
+                                    <th>Existencia</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="catalog-products-tbody">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: OPERACIONES (ENTRADAS / SALIDAS) -->
+            <div id="view-operaciones" class="view-section">
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark mb-1">Registrar Operación de Inventario</h1>
+                    <p class="text-muted small">Entradas (compras, ajustes) y Salidas (ventas, mermas) con validación atómica</p>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-12 col-lg-7">
+                        <div class="card border-0 shadow-sm rounded-3 p-4">
+                            <form id="form-operacion" onsubmit="handleOperacionSubmit(event)">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small">Prenda / Artículo</label>
+                                    <select id="op-producto" class="form-select" required onchange="handleProductChange(this)">
+                                        <option value="">Seleccione un producto...</option>
+                                    </select>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold small">Tipo de Transacción</label>
+                                        <select id="op-tipo" class="form-select" required>
+                                            <optgroup label="Entradas (+)">
+                                                <option value="COMPRA">Compra a Proveedor (+)</option>
+                                                <option value="DEVOLUCION_CLIENTE">Devolución de Cliente (+)</option>
+                                                <option value="AJUSTE_POSITIVO">Ajuste Positivo (+)</option>
+                                            </optgroup>
+                                            <optgroup label="Salidas (-)">
+                                                <option value="VENTA">Venta Directa (-)</option>
+                                                <option value="MERMA">Merma / Defecto (-)</option>
+                                                <option value="DONACION">Donación (-)</option>
+                                                <option value="AJUSTE_NEGATIVO">Ajuste Negativo (-)</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold small">Cantidad</label>
+                                        <input type="number" id="op-cantidad" class="form-control" min="1" required placeholder="Ej. 10"/>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold small">Observaciones / Motivo</label>
+                                    <textarea id="op-observacion" class="form-control" rows="2" placeholder="Nota de auditoría u orden de compra..."></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-rs-primary w-100 py-2">
+                                    <span class="material-symbols-outlined">save</span>
+                                    <span>Registrar y Actualizar Balance</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-5">
+                        <div class="card border-0 shadow-sm rounded-3 p-4 bg-light">
+                            <h2 class="h6 fw-bold mb-3">Información del Producto Seleccionado</h2>
+                            <div id="product-detail-card" class="text-muted small">
+                                Seleccione un producto del formulario para ver su stock actual, costo y especificaciones.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: MOVIMIENTOS -->
+            <div id="view-movimientos" class="view-section">
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark mb-1">Historial y Kárdex de Movimientos</h1>
+                    <p class="text-muted small">Auditoría completa de todas las transacciones realizadas</p>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha / Hora</th>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th>Tipo</th>
+                                    <th>Cantidad</th>
+                                    <th>Costo Unit.</th>
+                                    <th>Balance Resultante</th>
+                                    <th>Observación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="movimientos-tbody">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 5: REPORTES -->
+            <div id="view-reportes" class="view-section">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-1">Reporte de Existencias Plano (TXT)</h1>
+                        <p class="text-muted small">Algoritmo de corte de control/ruptura por artículo</p>
+                    </div>
+                    <button onclick="descargarReporteTxt()" class="btn btn-rs-primary btn-sm">
+                        <span class="material-symbols-outlined">download</span>
+                        <span>Descargar Archivo TXT</span>
+                    </button>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3 p-3">
+                    <pre id="txt-report-preview" class="p-3 bg-dark text-light rounded font-monospace" style="max-height: 500px; overflow-y: auto; font-size: 0.85rem; line-height: 1.5;"></pre>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- Modal Nuevo Producto -->
+<div class="modal fade" id="newProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-new-product" onsubmit="handleNewProductSubmit(event)">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Código SKU</label>
+                        <input type="text" id="np-codigo" class="form-control text-uppercase" required placeholder="Ej. CAM-009"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Descripción de la Prenda</label>
+                        <input type="text" id="np-descripcion" class="form-control" required placeholder="Ej. Camisa Lino Manga Corta"/>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Categoría</label>
+                            <select id="np-categoria" class="form-select" required>
+                                <option value="CAMISAS">Camisas</option>
+                                <option value="PANTALONES">Pantalones</option>
+                                <option value="CHAQUETAS">Chaquetas</option>
+                                <option value="POLOS">Polos</option>
+                                <option value="VESTIDOS">Vestidos</option>
+                                <option value="ACCESORIOS">Accesorios</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Talla</label>
+                            <select id="np-talla" class="form-select" required>
+                                <option value="S">S</option>
+                                <option value="M">M</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                                <option value="32">32</option>
+                                <option value="34">34</option>
+                                <option value="U">Única</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Costo ($)</label>
+                            <input type="number" step="0.01" id="np-costo" class="form-control" required placeholder="450.00"/>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Precio ($)</label>
+                            <input type="number" step="0.01" id="np-precio" class="form-control" required placeholder="890.00"/>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Stock Inicial</label>
+                            <input type="number" id="np-stock" class="form-control" required value="10"/>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Stock Mínimo</label>
+                            <input type="number" id="np-stock-minimo" class="form-control" required value="5"/>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-rs-primary w-100">Guardar Producto</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // State Store (In-Memory with LocalStorage support)
+    const initialProducts = [
+        { id: 1, codigo: 'CAM-001', descripcion: 'Camisa Oversize Básica', categoria: 'CAMISAS', talla: 'L', costo: 450.00, precio: 890.00, stock: 25, stockMinimo: 5, estado: 'ACTIVO', imagen: 'images/productos/camisa-001.jpg' },
+        { id: 2, codigo: 'PAN-002', descripcion: 'Jean Slim Fit Denim', categoria: 'PANTALONES', talla: '32', costo: 650.00, precio: 1290.00, stock: 18, stockMinimo: 5, estado: 'ACTIVO', imagen: 'images/productos/jeans-002.jpg' },
+        { id: 3, codigo: 'CHA-003', descripcion: 'Chaqueta Denim Clásica', categoria: 'CHAQUETAS', talla: 'M', costo: 1200.00, precio: 2490.00, stock: 8, stockMinimo: 5, estado: 'ACTIVO', imagen: 'images/productos/chaqueta-003.jpg' },
+        { id: 4, codigo: 'POL-004', descripcion: 'Polo Piqué Clásico', categoria: 'POLOS', talla: 'M', costo: 350.00, precio: 690.00, stock: 35, stockMinimo: 10, estado: 'ACTIVO', imagen: 'images/productos/polo-004.jpg' },
+        { id: 5, codigo: 'ACC-005', descripcion: 'Cinturón Cuero Genuino', categoria: 'ACCESORIOS', talla: 'U', costo: 220.00, precio: 450.00, stock: 12, stockMinimo: 5, estado: 'ACTIVO', imagen: 'images/productos/accesorios-005.jpg' },
+        { id: 6, codigo: 'VES-006', descripcion: 'Vestido Midi Floral', categoria: 'VESTIDOS', talla: 'S', costo: 800.00, precio: 1590.00, stock: 15, stockMinimo: 5, estado: 'ACTIVO', imagen: 'images/thumbnail.png' },
+        { id: 7, codigo: 'CAM-007', descripcion: 'Camisa Formal Slim', categoria: 'CAMISAS', talla: 'M', costo: 490.00, precio: 950.00, stock: 4, stockMinimo: 6, estado: 'ACTIVO', imagen: 'images/thumbnail.png' },
+        { id: 8, codigo: 'BER-008', descripcion: 'Bermuda Cargo Casual', categoria: 'PANTALONES', talla: '34', costo: 400.00, precio: 790.00, stock: 2, stockMinimo: 5, estado: 'ACTIVO', imagen: 'images/thumbnail.png' }
+    ];
+
+    let products = JSON.parse(localStorage.getItem('rs_demo_products')) || initialProducts;
+    let movements = JSON.parse(localStorage.getItem('rs_demo_movements')) || [
+        { fecha: new Date().toLocaleString(), codigo: 'CAM-001', descripcion: 'Camisa Oversize Básica', tipo: 'COMPRA', cantidad: 25, costo: 450.00, balance: 25, obs: 'Inventario Inicial' },
+        { fecha: new Date().toLocaleString(), codigo: 'PAN-002', descripcion: 'Jean Slim Fit Denim', tipo: 'COMPRA', cantidad: 18, costo: 650.00, balance: 18, obs: 'Inventario Inicial' },
+        { fecha: new Date().toLocaleString(), codigo: 'CHA-003', descripcion: 'Chaqueta Denim Clásica', tipo: 'VENTA', cantidad: -2, costo: 1200.00, balance: 8, obs: 'Venta mostrador #101' }
+    ];
+
+    function saveState() {
+        localStorage.setItem('rs_demo_products', JSON.stringify(products));
+        localStorage.setItem('rs_demo_movements', JSON.stringify(movements));
+        renderAll();
+    }
+
+    // Navigation Switcher
+    function switchView(viewId, ev) {
+        if (ev) ev.preventDefault();
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.rs-nav-item').forEach(el => el.classList.remove('active'));
+
+        const targetView = document.getElementById('view-' + viewId);
+        const targetNav = document.getElementById('nav-' + viewId);
+        if (targetView) targetView.classList.add('active');
+        if (targetNav) targetNav.classList.add('active');
+
+        const sectionNames = {
+            'dashboard': 'Dashboard',
+            'productos': 'Productos',
+            'operaciones': 'Operaciones',
+            'movimientos': 'Movimientos',
+            'reportes': 'Reportes TXT'
+        };
+        document.getElementById('topbar-current-section').textContent = sectionNames[viewId] || 'Sección';
+        closeMobileSidebar();
+    }
+
+    // Toggle Sidebar
+    function toggleSidebar() {
+        const layout = document.getElementById('rs-layout-root');
+        if (!layout) return;
+        if (window.innerWidth < 992) {
+            layout.classList.toggle('rs-sidebar-mobile-open');
+        } else {
+            layout.classList.toggle('rs-sidebar-collapsed');
+        }
+    }
+    function closeMobileSidebar() {
+        const layout = document.getElementById('rs-layout-root');
+        if (layout) layout.classList.remove('rs-sidebar-mobile-open');
+    }
+
+    // Render Logic
+    function renderAll() {
+        renderDashboard();
+        renderCatalog(products);
+        renderOperacionesSelect();
+        renderMovimientos();
+        renderReportPreview();
+    }
+
+    function renderDashboard() {
+        document.getElementById('stat-total-prod').textContent = products.length;
+        const lowStock = products.filter(p => p.estado === 'ACTIVO' && p.stock <= p.stockMinimo);
+        document.getElementById('stat-bajo-stock').textContent = lowStock.length;
+        document.getElementById('stat-mov-hoy').textContent = movements.length;
+        
+        const totalValue = products.reduce((acc, p) => acc + (p.costo * p.stock), 0);
+        document.getElementById('stat-valor-total').textContent = '$' + totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+        const criticalTbody = document.getElementById('critical-products-tbody');
+        criticalTbody.innerHTML = '';
+        lowStock.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="rs-code-tag">${p.codigo}</span></td>
+                <td class="fw-medium">${p.descripcion}</td>
+                <td><span class="badge bg-light text-dark border">${p.categoria}</span></td>
+                <td><span class="badge bg-danger-subtle text-danger fw-bold">${p.stock} uds</span></td>
+                <td class="text-muted">${p.stockMinimo} uds</td>
+                <td><span class="badge bg-success-subtle text-success">Activo</span></td>
+            `;
+            criticalTbody.appendChild(tr);
+        });
+    }
+
+    function renderCatalog(list) {
+        const tbody = document.getElementById('catalog-products-tbody');
+        tbody.innerHTML = '';
+        list.forEach(p => {
+            const isLow = p.stock <= p.stockMinimo;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="rs-code-tag">${p.codigo}</span></td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="${p.imagen}" alt="${p.descripcion}" class="rounded border" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.src='images/thumbnail.png'"/>
+                        <span class="fw-medium text-dark">${p.descripcion}</span>
+                    </div>
+                </td>
+                <td><span class="badge bg-light text-dark border">${p.categoria}</span></td>
+                <td><span class="badge bg-secondary-subtle text-secondary">${p.talla}</span></td>
+                <td>$${p.costo.toFixed(2)}</td>
+                <td class="fw-semibold text-dark">$${p.precio.toFixed(2)}</td>
+                <td>
+                    <span class="badge ${isLow ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}">
+                        ${p.stock} uds
+                    </span>
+                </td>
+                <td>
+                    <span class="badge ${p.estado === 'ACTIVO' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}">
+                        ${p.estado}
+                    </span>
+                </td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-light border py-0 px-2" onclick="toggleProductStatus(${p.id})">
+                        ${p.estado === 'ACTIVO' ? 'Desactivar' : 'Activar'}
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filterProducts() {
+        const q = document.getElementById('filter-search').value.toLowerCase().trim();
+        const cat = document.getElementById('filter-category').value;
+        const st = document.getElementById('filter-status').value;
+
+        const filtered = products.filter(p => {
+            const matchQ = !q || p.codigo.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q);
+            const matchCat = !cat || p.categoria === cat;
+            const matchSt = !st || p.estado === st;
+            return matchQ && matchCat && matchSt;
+        });
+        renderCatalog(filtered);
+    }
+
+    function toggleProductStatus(id) {
+        const p = products.find(x => x.id === id);
+        if (p) {
+            p.estado = p.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+            saveState();
+        }
+    }
+
+    function renderOperacionesSelect() {
+        const sel = document.getElementById('op-producto');
+        sel.innerHTML = '<option value="">Seleccione un producto...</option>';
+        products.filter(p => p.estado === 'ACTIVO').forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `[${p.codigo}] ${p.descripcion} (Stock: ${p.stock})`;
+            sel.appendChild(opt);
+        });
+    }
+
+    function handleProductChange(sel) {
+        const pId = parseInt(sel.value);
+        const card = document.getElementById('product-detail-card');
+        const prod = products.find(x => x.id === pId);
+        if (!prod) {
+            card.innerHTML = 'Seleccione un producto del formulario para ver su stock actual, costo y especificaciones.';
+            return;
+        }
+        card.innerHTML = `
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <img src="${prod.imagen}" alt="${prod.descripcion}" class="rounded border shadow-sm" style="width: 56px; height: 56px; object-fit: cover;" onerror="this.src='images/thumbnail.png'"/>
+                <div>
+                    <h6 class="fw-bold mb-0">${prod.descripcion}</h6>
+                    <span class="rs-code-tag">${prod.codigo}</span>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush small bg-transparent">
+                <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
+                    <span>Stock Actual:</span>
+                    <strong class="${prod.stock <= prod.stockMinimo ? 'text-danger' : 'text-success'}">${prod.stock} unidades</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
+                    <span>Stock Mínimo Alerta:</span>
+                    <span>${prod.stockMinimo} unidades</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
+                    <span>Costo Unitario:</span>
+                    <span>$${prod.costo.toFixed(2)}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0 bg-transparent">
+                    <span>Precio Venta:</span>
+                    <strong class="text-dark">$${prod.precio.toFixed(2)}</strong>
+                </li>
+            </ul>
+        `;
+    }
+
+    function handleOperacionSubmit(e) {
+        e.preventDefault();
+        const pId = parseInt(document.getElementById('op-producto').value);
+        const tipo = document.getElementById('op-tipo').value;
+        const cant = parseInt(document.getElementById('op-cantidad').value);
+        const obs = document.getElementById('op-observacion').value || 'Sin observaciones';
+
+        const prod = products.find(x => x.id === pId);
+        if (!prod) return;
+
+        const isSalida = ['VENTA', 'MERMA', 'DONACION', 'AJUSTE_NEGATIVO'].includes(tipo);
+
+        // REGLA CRÍTICA: No permitir salida superior a existencia
+        if (isSalida && cant > prod.stock) {
+            alert(`Error: Inventario insuficiente. El stock disponible es de ${prod.stock} uds y solicitó ${cant} uds.`);
+            return;
+        }
+
+        const delta = isSalida ? -cant : cant;
+        prod.stock += delta;
+
+        movements.unshift({
+            fecha: new Date().toLocaleString(),
+            codigo: prod.codigo,
+            descripcion: prod.descripcion,
+            tipo: tipo,
+            cantidad: delta,
+            costo: prod.costo,
+            balance: prod.stock,
+            obs: obs
+        });
+
+        saveState();
+        alert('¡Operación registrada con éxito! Nuevo balance: ' + prod.stock + ' unidades.');
+        document.getElementById('form-operacion').reset();
+        handleProductChange({ value: '' });
+        switchView('movimientos');
+    }
+
+    function handleNewProductSubmit(e) {
+        e.preventDefault();
+        const codigo = document.getElementById('np-codigo').value.trim().toUpperCase();
+        if (products.some(x => x.codigo === codigo)) {
+            alert('Error: Ya existe un producto con el código ' + codigo);
+            return;
+        }
+        const newP = {
+            id: Date.now(),
+            codigo: codigo,
+            descripcion: document.getElementById('np-descripcion').value.trim(),
+            categoria: document.getElementById('np-categoria').value,
+            talla: document.getElementById('np-talla').value,
+            costo: parseFloat(document.getElementById('np-costo').value),
+            precio: parseFloat(document.getElementById('np-precio').value),
+            stock: parseInt(document.getElementById('np-stock').value),
+            stockMinimo: parseInt(document.getElementById('np-stock-minimo').value),
+            estado: 'ACTIVO',
+            imagen: 'images/thumbnail.png'
+        };
+
+        products.push(newP);
+        saveState();
+        bootstrap.Modal.getInstance(document.getElementById('newProductModal')).hide();
+        document.getElementById('form-new-product').reset();
+        alert('Producto creado exitosamente en catálogo.');
+        switchView('productos');
+    }
+
+    function renderMovimientos() {
+        const tbody = document.getElementById('movimientos-tbody');
+        tbody.innerHTML = '';
+        movements.forEach(m => {
+            const isPos = m.cantidad > 0;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-muted small">${m.fecha}</td>
+                <td><span class="rs-code-tag">${m.codigo}</span></td>
+                <td class="fw-medium">${m.descripcion}</td>
+                <td><span class="badge ${isPos ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}">${m.tipo}</span></td>
+                <td class="fw-bold ${isPos ? 'text-success' : 'text-danger'}">${isPos ? '+' : ''}${m.cantidad}</td>
+                <td>$${m.costo.toFixed(2)}</td>
+                <td class="fw-bold text-dark">${m.balance}</td>
+                <td class="text-muted small">${m.obs}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function generateReportText() {
+        const now = new Date().toLocaleString();
+        let txt = "========================================================================================\n";
+        txt += "                 ROPASTORE — REPORTE DE CONTROL DE EXISTENCIAS Y KÁRDEX                 \n";
+        txt += "========================================================================================\n";
+        txt += `Fecha de Emisión : ${now}\n`;
+        txt += "Almacén          : Almacén Central (RopaStore)\n";
+        txt += "Algoritmo        : Ruptura / Corte de Control por Código de Artículo\n";
+        txt += "----------------------------------------------------------------------------------------\n\n";
+
+        let totalGeneral = 0;
+        let valorTotalGeneral = 0;
+
+        products.forEach(p => {
+            txt += `>>> ARTÍCULO: [${p.codigo}] ${p.descripcion.toUpperCase()} (Talla: ${p.talla} | Cat: ${p.categoria})\n`;
+            txt += "    Costo Unit.: $" + p.costo.toFixed(2) + " | Precio Venta: $" + p.precio.toFixed(2) + "\n";
+            txt += "    Estado     : " + p.estado + " | Stock Mínimo Alerta: " + p.stockMinimo + "\n";
+            txt += "    ------------------------------------------------------------------------------------\n";
+            txt += "    Fecha                 Tipo Transacción     Cantidad    Costo Unit.    Balance Final\n";
+            txt += "    ------------------------------------------------------------------------------------\n";
+            
+            const prodMovs = movements.filter(m => m.codigo === p.codigo);
+            if (prodMovs.length > 0) {
+                prodMovs.forEach(m => {
+                    const cantStr = (m.cantidad > 0 ? "+" : "") + m.cantidad;
+                    txt += `    ${m.fecha.padEnd(22)} ${m.tipo.padEnd(20)} ${cantStr.padEnd(11)} $${m.costo.toFixed(2).padEnd(13)} ${m.balance} uds\n`;
+                });
+            } else {
+                txt += `    (Sin movimientos registrados en el período actual. Existencia actual: ${p.stock} uds)\n`;
+            }
+            const valorArticulo = p.stock * p.costo;
+            totalGeneral += p.stock;
+            valorTotalGeneral += valorArticulo;
+            txt += "    ------------------------------------------------------------------------------------\n";
+            txt += `    *** TOTAL EXISTENCIA [${p.codigo}]: ${p.stock} UNIDADES (Valorizado: $${valorArticulo.toFixed(2)}) ***\n\n`;
+        });
+
+        txt += "========================================================================================\n";
+        txt += "                             RESUMEN GENERAL CONSOLIDADO                                \n";
+        txt += "========================================================================================\n";
+        txt += `Total de Artículos en Catálogo : ${products.length}\n`;
+        txt += `Total Físico de Existencias     : ${totalGeneral} unidades\n`;
+        txt += `Valorización Total de Inventario: $${valorTotalGeneral.toFixed(2)}\n`;
+        txt += "========================================================================================\n";
+        return txt;
+    }
+
+    function renderReportPreview() {
+        document.getElementById('txt-report-preview').textContent = generateReportText();
+    }
+
+    function descargarReporteTxt() {
+        const text = generateReportText();
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `reporte_existencias_ropastore_${Date.now()}.txt`;
+        a.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderAll();
+    });
+</script>
+</body>
+</html>

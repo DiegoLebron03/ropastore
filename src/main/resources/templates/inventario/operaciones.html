@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- Encabezado -->
+    <div class="mb-4">
+        <h1 class="h3 fw-bold text-dark mb-1">Entradas y Salidas de Inventario</h1>
+        <p class="text-muted mb-0" style="font-size: 0.92rem;">
+            Registro formal de movimientos operativos de almacén con cálculo atómico de balance
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Formulario Operativo -->
+        <div class="col-12 col-lg-8">
+            <div class="rs-card">
+                <div class="rs-card-header border-bottom-0 pb-0">
+                    <!-- Tabs Entrada / Salida -->
+                    <ul class="nav nav-pills w-100 p-1 bg-light rounded-3" role="tablist">
+                        <li class="nav-item flex-fill" role="presentation">
+                            <button class="nav-link w-100 fw-semibold text-center"
+                                    th:classappend="${transaccionDTO.tipo != null && transaccionDTO.tipo.isEntrada()} ? 'active bg-success text-white' : 'text-secondary'"
+                                    id="tab-entrada-btn" type="button" onclick="seleccionarModo('ENTRADA')">
+                                <span class="material-symbols-outlined align-middle me-1">add_box</span>
+                                <span>Registrar Entrada</span>
+                            </button>
+                        </li>
+                        <li class="nav-item flex-fill" role="presentation">
+                            <button class="nav-link w-100 fw-semibold text-center"
+                                    th:classappend="${transaccionDTO.tipo != null && transaccionDTO.tipo.isSalida()} ? 'active bg-danger text-white' : 'text-secondary'"
+                                    id="tab-salida-btn" type="button" onclick="seleccionarModo('SALIDA')">
+                                <span class="material-symbols-outlined align-middle me-1">indeterminate_check_box</span>
+                                <span>Registrar Salida</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="rs-card-body p-3 p-sm-4 pt-3">
+                    <form th:action="@{/inventario/operaciones}" th:object="${transaccionDTO}" method="post" id="form-operacion">
+                        <input type="hidden" id="input-modo" value="ENTRADA"/>
+
+                        <!-- 1. Selección de Producto -->
+                        <div class="mb-3">
+                            <label for="productoSelect" class="form-label fw-semibold small text-dark">
+                                Seleccione el Artículo <span class="text-danger">*</span>
+                            </label>
+                            <select id="productoSelect" th:field="*{productoId}" class="form-select"
+                                    th:classappend="${#fields.hasErrors('productoId')} ? 'is-invalid' : ''"
+                                    onchange="actualizarInfoProducto()">
+                                <option value="">-- Buscar y seleccionar prenda --</option>
+                                <option th:each="p : ${productos}"
+                                        th:value="${p.id}"
+                                        th:data-codigo="${p.codigo}"
+                                        th:data-descripcion="${p.descripcion}"
+                                        th:data-stock="${p.stockActual}"
+                                        th:data-minimo="${p.stockMinimo}"
+                                        th:data-costo="${p.costo}"
+                                        th:data-imagen="${p.imagenUrl}"
+                                        th:text="${'[' + p.codigo + '] ' + p.descripcion + ' (Stock: ' + p.stockActual + ')'}">
+                                    [CAM-001] Camisa Oversize (Stock: 30)
+                                </option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('productoId')}" th:errors="*{productoId}">
+                                Debe seleccionar un producto
+                            </div>
+                        </div>
+
+                        <!-- 2. Tipo de Movimiento -->
+                        <div class="mb-3">
+                            <label for="tipoSelect" class="form-label fw-semibold small text-dark">
+                                Motivo / Tipo de Transacción <span class="text-danger">*</span>
+                            </label>
+                            <select id="tipoSelect" th:field="*{tipo}" class="form-select"
+                                    th:classappend="${#fields.hasErrors('tipo')} ? 'is-invalid' : ''">
+                                <optgroup label="Tipos de Entrada" id="optgroup-entradas">
+                                    <option th:each="t : ${tiposEntrada}"
+                                            th:value="${t}"
+                                            th:text="${t.descripcion}">Compra</option>
+                                </optgroup>
+                                <optgroup label="Tipos de Salida" id="optgroup-salidas" style="display: none;">
+                                    <option th:each="t : ${tiposSalida}"
+                                            th:value="${t}"
+                                            th:text="${t.descripcion}">Venta</option>
+                                </optgroup>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}">
+                                Tipo de transacción requerido
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <!-- Cantidad -->
+                            <div class="col-12 col-md-6">
+                                <label for="cantidadInput" class="form-label fw-semibold small text-dark">
+                                    Cantidad de Unidades <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" min="1" id="cantidadInput" th:field="*{cantidad}"
+                                       class="form-control font-monospace"
+                                       th:classappend="${#fields.hasErrors('cantidad')} ? 'is-invalid' : ''"
+                                       placeholder="1"
+                                       oninput="calcularBalanceProyectado()"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}">
+                                    Cantidad inválida
+                                </div>
+                            </div>
+
+                            <!-- Costo Unitario -->
+                            <div class="col-12 col-md-6">
+                                <label for="costoInput" class="form-label fw-semibold small text-dark">
+                                    Costo Unitario ($) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" id="costoInput" th:field="*{costoUnitario}"
+                                           class="form-control font-monospace"
+                                           th:classappend="${#fields.hasErrors('costoUnitario')} ? 'is-invalid' : ''"
+                                           placeholder="0.00"/>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('costoUnitario')}" th:errors="*{costoUnitario}">
+                                        Costo unitario requerido
+                                    </div>
+                                </div>
+                                <div class="form-text small">Costo aplicado al movimiento contable.</div>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="mb-3">
+                            <label for="observacion" class="form-label fw-semibold small text-dark">Observación / Nota</label>
+                            <input type="text" id="observacion" th:field="*{observacion}"
+                                   class="form-control"
+                                   placeholder="ej. Factura #4092, Conteo mensual, Venta mostrador..."/>
+                        </div>
+
+                        <!-- Checkbox para Generar Reporte / Comprobante Individual -->
+                        <div class="card p-3 bg-light border-0 rounded-3 mb-4">
+                            <div class="form-check form-switch m-0 d-flex align-items-start gap-2.5">
+                                <input class="form-check-input mt-1" type="checkbox" role="switch" id="generarReporte" th:field="*{generarReporte}">
+                                <label class="form-check-label user-select-none cursor-pointer" for="generarReporte">
+                                    <span class="d-flex align-items-center gap-1.5 fw-semibold text-dark small">
+                                        <span class="material-symbols-outlined text-primary" style="font-size: 18px;">receipt_long</span>
+                                        <span>Generar reporte / comprobante de esta transacción</span>
+                                    </span>
+                                    <span class="d-block text-muted mt-0.5" style="font-size: 0.8rem; line-height: 1.35;">
+                                        Al procesar la operación, se emitirá y descargará automáticamente un archivo TXT individual con el folio, datos del artículo, cantidades, costos, balance y firmas.
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Botón Enviar -->
+                        <div class="d-grid">
+                            <button type="submit" id="btn-submit-op" class="btn btn-rs-primary btn-lg">
+                                <span class="material-symbols-outlined">check_circle</span>
+                                <span id="btn-submit-text">Procesar Entrada al Inventario</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral Informativo y Balance Proyectado -->
+        <div class="col-12 col-lg-4">
+            <div class="rs-card p-3 mb-3" id="panel-resumen">
+                <div class="rs-card-header px-0 pt-0 border-bottom-0">
+                    <h2 class="rs-card-title d-flex align-items-center gap-1.5" style="font-size: 0.95rem;">
+                        <span class="material-symbols-outlined text-primary">analytics</span>
+                        <span>Resumen de la Operación</span>
+                    </h2>
+                </div>
+
+                <div class="border rounded p-2.5 bg-light mb-3 d-flex align-items-center gap-3">
+                    <div class="rs-product-thumb rs-product-thumb-md" id="resumen-thumb" style="width: 44px; height: 44px; min-width: 44px; max-width: 44px; min-height: 44px; max-height: 44px; overflow: hidden; flex-shrink: 0; border-radius: 8px;">
+                        <span class="material-symbols-outlined text-secondary" style="font-size: 22px;">apparel</span>
+                    </div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="text-muted small" style="font-size: 0.78rem;">Artículo Seleccionado:</div>
+                        <div class="fw-bold text-dark text-truncate" id="resumen-articulo">Ninguno seleccionado</div>
+                        <div class="small text-muted font-monospace" id="resumen-codigo">-</div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-secondary small">Existencia Actual:</span>
+                    <span class="fw-bold font-monospace" id="resumen-stock-actual">0</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-secondary small">Impacto de la Operación:</span>
+                    <span class="fw-bold font-monospace" id="resumen-impacto">+0</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-secondary small">Balance Proyectado:</span>
+                    <span class="fw-bold font-monospace fs-5 text-dark" id="resumen-balance-final">0</span>
+                </div>
+
+                <!-- Alerta visual si excede stock -->
+                <div id="alerta-stock-insuficiente" class="alert alert-danger small mt-3 mb-0 d-none" role="alert">
+                    <div class="d-flex gap-2 align-items-center fw-semibold">
+                        <span class="material-symbols-outlined">error</span>
+                        <span>¡Existencia insuficiente!</span>
+                    </div>
+                    <p class="mb-0 mt-1">No hay suficiente inventario disponible para realizar esta operación.</p>
+                </div>
+            </div>
+
+            <!-- Accesos Rápidos -->
+            <div class="rs-card p-3">
+                <div class="small fw-semibold text-secondary mb-2">Accesos Directos</div>
+                <div class="d-flex flex-column gap-2">
+                    <a th:href="@{/inventario/movimientos}" class="btn btn-sm btn-rs-outline w-100 text-start">
+                        <span class="material-symbols-outlined">history</span>
+                        <span>Ver Historial de Movimientos</span>
+                    </a>
+                    <a th:href="@{/reportes}" class="btn btn-sm btn-rs-outline w-100 text-start">
+                        <span class="material-symbols-outlined">description</span>
+                        <span>Generar Reporte TXT</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+function seleccionarModo(modo) {
+    const inputModo = document.getElementById('input-modo');
+    inputModo.value = modo;
+
+    const btnEntrada = document.getElementById('tab-entrada-btn');
+    const btnSalida = document.getElementById('tab-salida-btn');
+    const optEntradas = document.getElementById('optgroup-entradas');
+    const optSalidas = document.getElementById('optgroup-salidas');
+    const tipoSelect = document.getElementById('tipoSelect');
+    const btnSubmit = document.getElementById('btn-submit-op');
+    const btnText = document.getElementById('btn-submit-text');
+
+    if (modo === 'ENTRADA') {
+        btnEntrada.className = 'nav-link w-100 fw-semibold text-center active bg-success text-white';
+        btnSalida.className = 'nav-link w-100 fw-semibold text-center text-secondary';
+        optEntradas.style.display = '';
+        optSalidas.style.display = 'none';
+        tipoSelect.value = optEntradas.querySelector('option') ? optEntradas.querySelector('option').value : '';
+        btnSubmit.className = 'btn btn-rs-primary btn-lg';
+        btnText.innerText = 'Procesar Entrada al Inventario';
+    } else {
+        btnEntrada.className = 'nav-link w-100 fw-semibold text-center text-secondary';
+        btnSalida.className = 'nav-link w-100 fw-semibold text-center active bg-danger text-white';
+        optEntradas.style.display = 'none';
+        optSalidas.style.display = '';
+        tipoSelect.value = optSalidas.querySelector('option') ? optSalidas.querySelector('option').value : '';
+        btnSubmit.className = 'btn btn-danger btn-lg';
+        btnText.innerText = 'Procesar Salida del Inventario';
+    }
+
+    calcularBalanceProyectado();
+}
+
+function actualizarInfoProducto() {
+    const select = document.getElementById('productoSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    const costoInput = document.getElementById('costoInput');
+    const thumbElem = document.getElementById('resumen-thumb');
+
+    if (selectedOption && selectedOption.value) {
+        document.getElementById('resumen-articulo').innerText = selectedOption.dataset.descripcion;
+        document.getElementById('resumen-codigo').innerText = selectedOption.dataset.codigo;
+        document.getElementById('resumen-stock-actual').innerText = selectedOption.dataset.stock;
+        if (!costoInput.value || costoInput.value === '0.00' || costoInput.value === '0') {
+            costoInput.value = selectedOption.dataset.costo || '0.00';
+        }
+        if (selectedOption.dataset.imagen && selectedOption.dataset.imagen.trim() !== '') {
+            thumbElem.innerHTML = '<img src="' + selectedOption.dataset.imagen + '" class="rs-product-img" style="width:100%;height:100%;object-fit:cover;display:block;" alt="Prenda">';
+        } else {
+            thumbElem.innerHTML = '<span class="material-symbols-outlined text-secondary" style="font-size: 22px;">apparel</span>';
+        }
+    } else {
+        document.getElementById('resumen-articulo').innerText = 'Ninguno seleccionado';
+        document.getElementById('resumen-codigo').innerText = '-';
+        document.getElementById('resumen-stock-actual').innerText = '0';
+        if (thumbElem) {
+            thumbElem.innerHTML = '<span class="material-symbols-outlined text-secondary" style="font-size: 24px;">apparel</span>';
+        }
+    }
+
+    calcularBalanceProyectado();
+}
+
+function calcularBalanceProyectado() {
+    const select = document.getElementById('productoSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    const cantidadInput = document.getElementById('cantidadInput');
+    const inputModo = document.getElementById('input-modo').value;
+    const alerta = document.getElementById('alerta-stock-insuficiente');
+    const btnSubmit = document.getElementById('btn-submit-op');
+
+    let stockActual = 0;
+    if (selectedOption && selectedOption.dataset && selectedOption.dataset.stock) {
+        stockActual = parseInt(selectedOption.dataset.stock, 10);
+    }
+
+    let cantidad = parseInt(cantidadInput.value, 10);
+    if (isNaN(cantidad) || cantidad <= 0) {
+        cantidad = 0;
+    }
+
+    let balanceFinal = stockActual;
+    let impactoTexto = '+0';
+
+    if (inputModo === 'ENTRADA') {
+        balanceFinal = stockActual + cantidad;
+        impactoTexto = '+' + cantidad;
+        alerta.classList.add('d-none');
+        btnSubmit.disabled = false;
+    } else {
+        balanceFinal = stockActual - cantidad;
+        impactoTexto = '-' + cantidad;
+
+        if (cantidad > stockActual) {
+            alerta.classList.remove('d-none');
+            btnSubmit.disabled = true;
+        } else {
+            alerta.classList.add('d-none');
+            btnSubmit.disabled = false;
+        }
+    }
+
+    document.getElementById('resumen-impacto').innerText = impactoTexto;
+    document.getElementById('resumen-balance-final').innerText = balanceFinal;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarInfoProducto();
+});
+</script>
+
+</div>
+</body>
+</html>

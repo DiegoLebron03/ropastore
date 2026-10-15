@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- Encabezado del Catálogo -->
+    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">Catálogo de Productos</h1>
+            <p class="text-muted mb-0" style="font-size: 0.92rem;">
+                Administración integral de prendas, precios, existencias y estados del inventario
+            </p>
+        </div>
+        <a th:href="@{/productos/nuevo}" class="btn btn-rs-primary text-nowrap">
+            <span class="material-symbols-outlined">add</span>
+            <span>Nuevo Producto</span>
+        </a>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="rs-card mb-4 p-3">
+        <form th:action="@{/productos}" method="get" class="row g-2 align-items-center">
+            <div class="col-12 col-lg-4 col-xl-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                    </span>
+                    <input type="text" name="q" class="form-control border-start-0 ps-0"
+                           placeholder="Buscar por código (ej. CAM-001) o descripción..."
+                           th:value="${filtroBusqueda}"/>
+                </div>
+            </div>
+            <div class="col-6 col-sm-6 col-lg-3 col-xl-3">
+                <select name="categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    <option th:each="cat : ${categorias}"
+                            th:value="${cat}"
+                            th:text="${cat.nombre}"
+                            th:selected="${cat == filtroCategoria}">Camisas</option>
+                </select>
+            </div>
+            <div class="col-6 col-sm-6 col-lg-2 col-xl-2">
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    <option th:each="est : ${estados}"
+                            th:value="${est}"
+                            th:text="${est.descripcion}"
+                            th:selected="${est == filtroEstado}">Activo</option>
+                </select>
+            </div>
+            <div class="col-12 col-sm-12 col-lg-3 col-xl-2 d-flex gap-2">
+                <button type="submit" class="btn btn-rs-primary flex-grow-1 justify-content-center text-nowrap">Filtrar</button>
+                <a th:href="@{/productos}" class="btn btn-rs-outline flex-shrink-0" title="Limpiar filtros">
+                    <span class="material-symbols-outlined">refresh</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla Principal de Productos (Contenedor rs-card idéntico al Dashboard) -->
+    <div class="rs-card shadow-sm mb-4">
+        <div class="rs-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h2 class="rs-card-title d-flex align-items-center gap-2" style="font-size: 0.95rem;">
+                <span class="material-symbols-outlined text-primary">inventory_2</span>
+                <span>Catálogo de Artículos</span>
+            </h2>
+            <span class="badge bg-light text-secondary border font-monospace" th:text="${productos != null ? #lists.size(productos) + ' artículos' : '0 artículos'}">0 artículos</span>
+        </div>
+        <div class="table-responsive">
+            <table class="rs-table">
+                <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th class="d-none d-lg-table-cell">Categoría</th>
+                    <th class="d-none d-xl-table-cell">Talla / Color</th>
+                    <th class="text-end d-none d-xxl-table-cell">Costo</th>
+                    <th class="text-end">Precio</th>
+                    <th class="text-center">Existencia</th>
+                    <th class="text-center d-none d-sm-table-cell">Estado</th>
+                    <th class="text-end text-nowrap">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(productos)}">
+                    <td colspan="9" class="text-center py-5 text-muted">
+                        <span class="material-symbols-outlined text-secondary mb-2" style="font-size: 36px;">inventory_2</span>
+                        <div class="fw-semibold">No se encontraron productos coincidentes</div>
+                        <p class="small text-muted mb-0">Intenta cambiar los términos de búsqueda o filtros.</p>
+                    </td>
+                </tr>
+                <tr th:each="p : ${productos}">
+                    <td>
+                        <span class="rs-code-tag text-nowrap" th:text="${p.codigo}">CAM-001</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2 gap-sm-2.5">
+                            <div class="rs-product-thumb" style="width: 34px; height: 34px; min-width: 34px; max-width: 34px; min-height: 34px; max-height: 34px; overflow: hidden; flex-shrink: 0; border-radius: 6px;">
+                                <img th:if="${p.hasImagen()}" th:src="@{${p.imagenUrl}}" th:alt="${p.descripcion}" class="rs-product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+                                <div th:unless="${p.hasImagen()}" class="rs-product-placeholder">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">apparel</span>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column min-w-0">
+                                <a th:href="@{/productos/{id}(id=${p.id})}" class="fw-semibold text-dark text-decoration-none text-truncate" style="max-width: 180px;">
+                                    <span th:text="${p.descripcion}">Camisa Oversize</span>
+                                </a>
+                                <span class="text-muted small" style="font-size: 0.76rem;"
+                                      th:text="${(p.marca != null ? p.marca : '') + (p.talla != null ? ' • ' + p.talla.name() : '')}">Zara • M</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="d-none d-lg-table-cell">
+                        <span class="badge bg-light text-secondary border" th:text="${p.categoria != null ? p.categoria.nombre : '-'}">Camisas</span>
+                    </td>
+                    <td class="small text-muted d-none d-xl-table-cell text-nowrap">
+                        <span th:text="${p.talla != null ? p.talla.name() : '-'}">M</span> /
+                        <span th:text="${p.color != null ? p.color : '-'}">Azul</span>
+                    </td>
+                    <td class="text-end text-muted font-monospace d-none d-xxl-table-cell" th:text="${'$' + #numbers.formatDecimal(p.costo, 1, 'COMMA', 2, 'POINT')}">$850.00</td>
+                    <td class="text-end fw-semibold text-dark font-monospace text-nowrap" th:text="${'$' + #numbers.formatDecimal(p.precio, 1, 'COMMA', 2, 'POINT')}">$1,450.00</td>
+                    <td class="text-center text-nowrap">
+                        <span class="fw-bold font-monospace px-2 py-0.5 rounded"
+                              th:classappend="${p.isBajoStock()} ? 'rs-badge-lowstock' : 'bg-light text-dark'"
+                              th:text="${p.stockActual}">30</span>
+                        <div th:if="${p.isBajoStock()}" class="text-danger small mt-0.5" style="font-size: 0.68rem;">
+                            ¡Stock bajo! (mín <span th:text="${p.stockMinimo}">10</span>)
+                        </div>
+                    </td>
+                    <td class="text-center d-none d-sm-table-cell">
+                        <span th:if="${p.isActivo()}" class="rs-badge-active text-nowrap">Activo</span>
+                        <span th:unless="${p.isActivo()}" class="rs-badge-inactive text-nowrap">Inactivo</span>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <div class="btn-group btn-group-sm text-nowrap">
+                            <a th:href="@{/productos/{id}(id=${p.id})}" class="btn btn-outline-secondary p-1" title="Ver detalle">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+                            </a>
+                            <a th:href="@{/productos/{id}/editar(id=${p.id})}" class="btn btn-outline-secondary p-1" title="Editar">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                            </a>
+                            <!-- Botón modal desactivar o reactivar -->
+                            <button th:if="${p.isActivo()}"
+                                    type="button" class="btn btn-outline-danger p-1"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#modalDesactivar-' + ${p.id}"
+                                    title="Desactivar producto">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">pause_circle</span>
+                            </button>
+                            <button th:unless="${p.isActivo()}"
+                                    type="button" class="btn btn-outline-success p-1"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#modalReactivar-' + ${p.id}"
+                                    title="Reactivar producto">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">play_circle</span>
+                            </button>
+                        </div>
+
+                        <!-- Modal Confirmación Desactivar (Stitch Screen 04) -->
+                        <div class="modal fade" th:id="'modalDesactivar-' + ${p.id}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content text-start">
+                                    <div class="modal-header border-0 pb-0">
+                                        <div class="p-2 rounded-circle bg-danger-subtle text-danger me-2">
+                                            <span class="material-symbols-outlined">warning</span>
+                                        </div>
+                                        <h5 class="modal-title fw-bold text-dark">Desactivar Producto</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body py-3">
+                                        <p class="text-secondary mb-2">
+                                            ¿Estás seguro de que deseas desactivar el producto
+                                            <strong class="text-dark" th:text="${'[' + p.codigo + '] ' + p.descripcion}">[CAM-001] Camisa</strong>?
+                                        </p>
+                                        <div class="alert alert-warning small mb-0 d-flex gap-2 align-items-center">
+                                            <span class="material-symbols-outlined" style="font-size: 18px;">info</span>
+                                            <span>Los productos inactivos no podrán registrar nuevas entradas ni salidas en el inventario.</span>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 pt-0">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                        <form th:action="@{/productos/{id}/desactivar(id=${p.id})}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-danger">Confirmar Desactivación</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Confirmación Reactivar (Stitch Screen 05) -->
+                        <div class="modal fade" th:id="'modalReactivar-' + ${p.id}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content text-start">
+                                    <div class="modal-header border-0 pb-0">
+                                        <div class="p-2 rounded-circle bg-success-subtle text-success me-2">
+                                            <span class="material-symbols-outlined">check_circle</span>
+                                        </div>
+                                        <h5 class="modal-title fw-bold text-dark">Reactivar Producto</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body py-3">
+                                        <p class="text-secondary mb-2">
+                                            ¿Deseas reactivar el producto
+                                            <strong class="text-dark" th:text="${'[' + p.codigo + '] ' + p.descripcion}">[CAM-001] Camisa</strong>?
+                                        </p>
+                                        <p class="small text-muted mb-0">
+                                            El artículo volverá a estar disponible para movimientos de almacén y ventas.
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer border-0 pt-0">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                        <form th:action="@{/productos/{id}/reactivar(id=${p.id})}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-success">Confirmar Reactivación</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

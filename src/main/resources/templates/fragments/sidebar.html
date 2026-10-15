@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside th:fragment="sidebar" class="rs-sidebar select-none">
+    <div class="d-flex flex-column flex-grow-1 overflow-auto">
+        <!-- Brand Header (Interactivo: clic para plegar/desplegar) -->
+        <div class="rs-brand d-flex align-items-center justify-content-between" onclick="toggleSidebar()" role="button" title="Plegar / Desplegar menú lateral">
+            <div class="d-flex align-items-center gap-2 text-decoration-none text-dark flex-grow-1 min-w-0" style="cursor: pointer;">
+                <img th:src="@{/images/logo.png}" alt="RopaStore Logo"/>
+                <div class="rs-brand-text">
+                    <span class="rs-brand-title">RopaStore</span>
+                    <span class="rs-brand-subtitle">Inventario Inteligente</span>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-light border d-lg-none p-1 text-muted" type="button" onclick="event.stopPropagation(); closeMobileSidebar()" aria-label="Cerrar menú">
+                <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+            </button>
+        </div>
+
+        <!-- Grupo Operaciones -->
+        <div class="rs-nav-group-title">Operaciones</div>
+        <nav class="d-flex flex-column">
+            <a th:href="@{/dashboard}"
+               class="rs-nav-item"
+               title="Dashboard"
+               th:classappend="${activeNav == 'dashboard'} ? 'active' : ''">
+                <div class="rs-nav-item-icon">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </div>
+                <span class="badge rounded-pill bg-success-subtle text-success font-monospace" style="font-size: 0.7rem;">Live</span>
+            </a>
+
+            <a th:href="@{/productos}"
+               class="rs-nav-item"
+               title="Productos"
+               th:classappend="${activeNav == 'productos'} ? 'active' : ''">
+                <div class="rs-nav-item-icon">
+                    <span class="material-symbols-outlined">apparel</span>
+                    <span>Productos</span>
+                </div>
+            </a>
+
+            <a th:href="@{/inventario/operaciones}"
+               class="rs-nav-item"
+               title="Entradas / Salidas"
+               th:classappend="${activeNav == 'operaciones'} ? 'active' : ''">
+                <div class="rs-nav-item-icon">
+                    <span class="material-symbols-outlined">sync_alt</span>
+                    <span>Entradas / Salidas</span>
+                </div>
+            </a>
+
+            <a th:href="@{/inventario/movimientos}"
+               class="rs-nav-item"
+               title="Movimientos"
+               th:classappend="${activeNav == 'movimientos'} ? 'active' : ''">
+                <div class="rs-nav-item-icon">
+                    <span class="material-symbols-outlined">receipt_long</span>
+                    <span>Movimientos</span>
+                </div>
+            </a>
+        </nav>
+
+        <!-- Grupo Gestión & Reportes -->
+        <div class="rs-nav-group-title mt-2">Gestión & Análisis</div>
+        <nav class="d-flex flex-column">
+            <a th:href="@{/reportes}"
+               class="rs-nav-item"
+               title="Reportes TXT"
+               th:classappend="${activeNav == 'reportes'} ? 'active' : ''">
+                <div class="rs-nav-item-icon">
+                    <span class="material-symbols-outlined">description</span>
+                    <span>Reportes TXT</span>
+                </div>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Sidebar Footer / Perfil -->
+    <div class="rs-sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+            <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">Spring Boot 3.3.4</span>
+            <span class="badge bg-success-subtle text-success border" style="font-size: 0.7rem;">Java 21</span>
+        </div>
+        <div class="rs-user-profile">
+            <img th:src="@{/images/avatar.png}" alt="Avatar" class="rs-user-avatar"/>
+            <div class="flex-grow-1 overflow-hidden">
+                <div class="rs-user-name text-truncate">Carlos Mendoza</div>
+                <div class="rs-user-role text-truncate">Admin Tienda</div>
+            </div>
+        </div>
+    </div>
+</aside>
+</body>
+</html>

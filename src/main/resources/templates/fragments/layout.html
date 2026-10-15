@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle != null ? pageTitle + ' — RopaStore' : 'RopaStore — Inventario Inteligente'}">RopaStore</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}"/>
+    
+    <!-- RopaStore Official Theme CSS (con cache-buster) -->
+    <link rel="stylesheet" th:href="@{/css/ropastore.css?v=2.2}"/>
+</head>
+<body>
+<div class="rs-layout" id="rs-layout-root">
+    <!-- Backdrop para dispositivos móviles -->
+    <div class="rs-sidebar-backdrop" id="rsSidebarBackdrop" onclick="closeMobileSidebar()"></div>
+
+    <!-- Sidebar -->
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+    <!-- Main Content Wrapper -->
+    <div class="rs-main-wrapper">
+        <!-- Topbar -->
+        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+
+        <!-- Dynamic Content -->
+        <main class="rs-content">
+            <!-- Global Flash Alerts -->
+            <th:block th:replace="~{fragments/alerts :: alerts}"></th:block>
+
+            <!-- Page Body Injected Here -->
+            <th:block th:replace="${content}"></th:block>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+<!-- Script Oficial de Menú Lateral Plegable / Desplegable y Responsive -->
+<script>
+    function toggleSidebar() {
+        var layout = document.getElementById('rs-layout-root');
+        if (!layout) return;
+        if (window.innerWidth < 992) {
+            layout.classList.toggle('rs-sidebar-mobile-open');
+        } else {
+            layout.classList.toggle('rs-sidebar-collapsed');
+            var isCollapsed = layout.classList.contains('rs-sidebar-collapsed');
+            try {
+                localStorage.setItem('rs_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            } catch (e) {}
+        }
+    }
+
+    function toggleMobileSidebar() {
+        toggleSidebar();
+    }
+
+    function closeMobileSidebar() {
+        var layout = document.getElementById('rs-layout-root');
+        if (layout) {
+            layout.classList.remove('rs-sidebar-mobile-open');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            if (window.innerWidth >= 992 && localStorage.getItem('rs_sidebar_collapsed') === 'true') {
+                var layout = document.getElementById('rs-layout-root');
+                if (layout) layout.classList.add('rs-sidebar-collapsed');
+            }
+        } catch (e) {}
+    });
+</script>
+</body>
+</html>

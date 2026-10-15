@@ -1,0 +1,13 @@
+{
+  "name": "ropastore",
+  "version": "0.0.1-SNAPSHOT",
+  "scripts": {
+    "build": "./mvnw clean compile -DskipTests",
+    "test": "./mvnw test",
+    "start": "./mvnw spring-boot:run"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.1",
+    "@neon/env": "^1.6.2"
+  }
+}

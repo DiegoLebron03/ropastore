@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- Encabezado -->
+    <div class="mb-4">
+        <a th:href="@{/productos}" class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1 mb-2">
+            <span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span>
+            <span>Volver al Catálogo</span>
+        </a>
+        <h1 class="h3 fw-bold text-dark mb-1" th:text="${isEdit ? 'Editar Producto: ' + productoOriginal.codigo : 'Registrar Nuevo Producto'}">
+            Registrar Producto
+        </h1>
+        <p class="text-muted mb-0" style="font-size: 0.92rem;">
+            Ingrese los datos de la prenda para catalogarla en el sistema de inventario.
+        </p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="rs-card">
+                <div class="rs-card-body p-3 p-sm-4">
+                    <form th:action="${isEdit ? '/productos/' + productoOriginal.id + '/editar' : '/productos/nuevo'}"
+                          th:object="${productoDTO}"
+                          method="post"
+                          enctype="multipart/form-data"
+                          novalidate>
+
+                        <!-- Campo oculto para mantener imagen previa si no se reemplaza -->
+                        <input type="hidden" th:field="*{imagenUrl}" id="imagenUrlHidden"/>
+
+                        <!-- Sección de Fotografía del Producto -->
+                        <div class="mb-4 p-3 rounded-3 bg-light border">
+                            <label class="form-label fw-semibold small text-dark d-flex align-items-center gap-1 mb-2">
+                                <span class="material-symbols-outlined text-primary" style="font-size: 20px;">photo_camera</span>
+                                <span>Fotografía / Imagen del Producto</span>
+                                <span class="badge bg-white text-muted border ms-1 fw-normal">Opcional</span>
+                            </label>
+
+                            <div class="row align-items-center g-3">
+                                <!-- Zona de Drag & Drop y Selección -->
+                                <div class="col-12 col-md-7">
+                                    <div id="dropZone" class="rs-upload-box d-flex flex-column align-items-center justify-content-center p-3 p-sm-4" style="min-height: 220px;">
+                                        <div class="rounded-circle bg-success-subtle p-3 text-success mb-2">
+                                            <span class="material-symbols-outlined" style="font-size: 32px;">cloud_upload</span>
+                                        </div>
+                                        <div class="fw-semibold text-dark mb-1">Haz clic para subir o arrastra la imagen aquí</div>
+                                        <div class="small text-muted mb-2">Formatos aceptados: JPG, PNG, WebP o GIF (Máx. 5MB)</div>
+                                        <button type="button" class="btn btn-outline-success btn-sm px-3" onclick="document.getElementById('imagenArchivo').click()">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">add_photo_alternate</span>
+                                            <span>Seleccionar archivo</span>
+                                        </button>
+                                        <input type="file" id="imagenArchivo" name="imagenArchivo"
+                                               accept="image/png, image/jpeg, image/webp, image/gif"
+                                               class="d-none"
+                                               th:classappend="${#fields.hasErrors('imagenArchivo')} ? 'is-invalid' : ''"/>
+                                    </div>
+                                    <div class="text-danger small mt-1" th:if="${#fields.hasErrors('imagenArchivo')}" th:errors="*{imagenArchivo}">
+                                        Error en formato de imagen
+                                    </div>
+                                </div>
+
+                                <!-- Contenedor de Previsualización en Vivo con marco idéntico al placeholder -->
+                                <div class="col-12 col-md-5 d-flex justify-content-center align-items-center">
+                                    <div class="w-100" style="max-width: 280px; height: 220px; min-height: 220px; max-height: 220px; position: relative;">
+                                        <!-- Card con Imagen -->
+                                        <div id="previewCard" class="rs-upload-preview-card text-center w-100 h-100 shadow-sm border rounded-3 bg-white d-flex flex-column justify-content-between overflow-hidden"
+                                             style="height: 220px; min-height: 220px; max-height: 220px;"
+                                             th:style="${productoDTO.imagenUrl != null and !productoDTO.imagenUrl.isEmpty()} ? 'display: flex !important; height: 220px; min-height: 220px; max-height: 220px;' : 'display: none !important;'">
+                                            <div class="position-relative flex-grow-1 overflow-hidden" style="height: 165px; max-height: 165px; background-color: var(--rs-slate-100);">
+                                                <img id="imgPreview"
+                                                     th:src="${productoDTO.imagenUrl != null and !productoDTO.imagenUrl.isEmpty() ? productoDTO.imagenUrl : '#'}"
+                                                     alt="Vista previa de la prenda"
+                                                     class="rs-upload-preview-img"
+                                                     style="width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 165px !important; object-fit: cover !important; display: block !important;"/>
+                                                <span id="previewBadge" class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 text-white" style="font-size: 0.72rem;">
+                                                    <span th:text="${isEdit ? 'Imagen actual' : 'Nueva imagen'}">Previsualización</span>
+                                                </span>
+                                            </div>
+                                            <div class="p-2 d-flex align-items-center justify-content-between bg-white border-top flex-shrink-0" style="height: 55px; max-height: 55px;">
+                                                <div class="text-start overflow-hidden me-2 min-w-0">
+                                                    <div id="previewFileName" class="small fw-semibold text-truncate" style="max-width: 160px;"
+                                                         th:text="${productoDTO.imagenUrl != null ? 'imagen-guardada' : 'archivo.jpg'}">
+                                                        prenda.jpg
+                                                    </div>
+                                                    <div id="previewFileSize" class="text-muted" style="font-size: 0.72rem;">Lista para guardar</div>
+                                                </div>
+                                                <button type="button" id="btnQuitarImagen" class="btn btn-sm btn-outline-danger p-1 flex-shrink-0" title="Quitar imagen seleccionada">
+                                                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Estado vacío si no hay imagen (Placeholder) -->
+                                        <div id="emptyPreviewPlaceholder"
+                                             class="p-4 text-center rounded-3 bg-white border border-dashed w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted"
+                                             style="height: 220px; min-height: 220px; max-height: 220px;"
+                                             th:style="${productoDTO.imagenUrl != null and !productoDTO.imagenUrl.isEmpty()} ? 'display: none !important;' : 'display: flex !important; height: 220px; min-height: 220px; max-height: 220px;'">
+                                            <span class="material-symbols-outlined text-secondary mb-1" style="font-size: 36px;">image_not_supported</span>
+                                            <span class="small fw-medium">Sin imagen cargada</span>
+                                            <span class="text-muted" style="font-size: 0.75rem;">Se mostrará un icono estándar si no se sube una foto</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Código de Producto -->
+                            <div class="col-12 col-md-4">
+                                <label for="codigo" class="form-label fw-semibold small text-dark">
+                                    Código del Artículo <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="codigo" th:field="*{codigo}"
+                                       class="form-control font-monospace text-uppercase"
+                                       th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid' : ''"
+                                       placeholder="ej. CAM-001"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}">
+                                    Código obligatorio
+                                </div>
+                                <div class="form-text small">Identificador único en inventario.</div>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="col-12 col-md-8">
+                                <label for="descripcion" class="form-label fw-semibold small text-dark">
+                                    Descripción de la Prenda <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="descripcion" th:field="*{descripcion}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('descripcion')} ? 'is-invalid' : ''"
+                                       placeholder="ej. Camisa Oversize Básica Manga Larga"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}">
+                                    Descripción obligatoria
+                                </div>
+                            </div>
+
+                            <!-- Categoría -->
+                            <div class="col-12 col-md-4">
+                                <label for="categoria" class="form-label fw-semibold small text-dark">
+                                    Categoría <span class="text-danger">*</span>
+                                </label>
+                                <select id="categoria" th:field="*{categoria}"
+                                        class="form-select"
+                                        th:classappend="${#fields.hasErrors('categoria')} ? 'is-invalid' : ''">
+                                    <option value="">Seleccione categoría...</option>
+                                    <option th:each="cat : ${categorias}"
+                                            th:value="${cat}"
+                                            th:text="${cat.nombre}">Camisas</option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}">
+                                    Debe seleccionar una categoría
+                                </div>
+                            </div>
+
+                            <!-- Marca -->
+                            <div class="col-12 col-md-4">
+                                <label for="marca" class="form-label fw-semibold small text-dark">Marca / Fabricante</label>
+                                <input type="text" id="marca" th:field="*{marca}"
+                                       class="form-control"
+                                       placeholder="ej. Zara Studio, Levi's, etc."/>
+                            </div>
+
+                            <!-- Talla -->
+                            <div class="col-6 col-md-2">
+                                <label for="talla" class="form-label fw-semibold small text-dark">Talla</label>
+                                <select id="talla" th:field="*{talla}" class="form-select">
+                                    <option value="">N/A</option>
+                                    <option th:each="t : ${tallas}"
+                                            th:value="${t}"
+                                            th:text="${t.name()}">M</option>
+                                </select>
+                            </div>
+
+                            <!-- Color -->
+                            <div class="col-6 col-md-2">
+                                <label for="color" class="form-label fw-semibold small text-dark">Color</label>
+                                <input type="text" id="color" th:field="*{color}"
+                                       class="form-control"
+                                       placeholder="ej. Blanco, Negro"/>
+                            </div>
+
+                            <hr class="my-3"/>
+
+                            <!-- Costo Unitario -->
+                            <div class="col-12 col-md-4">
+                                <label for="costo" class="form-label fw-semibold small text-dark">
+                                    Costo Unitario ($) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" id="costo" th:field="*{costo}"
+                                           class="form-control font-monospace"
+                                           th:classappend="${#fields.hasErrors('costo')} ? 'is-invalid' : ''"
+                                           placeholder="0.00"/>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('costo')}" th:errors="*{costo}">
+                                        Costo inválido
+                                    </div>
+                                </div>
+                                <div class="form-text small">Costo promedio de adquisición.</div>
+                            </div>
+
+                            <!-- Precio de Venta -->
+                            <div class="col-12 col-md-4">
+                                <label for="precio" class="form-label fw-semibold small text-dark">
+                                    Precio de Venta ($) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" id="precio" th:field="*{precio}"
+                                           class="form-control font-monospace"
+                                           th:classappend="${#fields.hasErrors('precio')} ? 'is-invalid' : ''"
+                                           placeholder="0.00"/>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}">
+                                        Precio inválido
+                                    </div>
+                                </div>
+                                <div class="form-text small">Precio al público final.</div>
+                            </div>
+
+                            <!-- Stock Mínimo -->
+                            <div class="col-12 col-md-4">
+                                <label for="stockMinimo" class="form-label fw-semibold small text-dark">
+                                    Stock Mínimo de Alerta <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" min="0" id="stockMinimo" th:field="*{stockMinimo}"
+                                       class="form-control font-monospace"
+                                       th:classappend="${#fields.hasErrors('stockMinimo')} ? 'is-invalid' : ''"
+                                       placeholder="5"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('stockMinimo')}" th:errors="*{stockMinimo}">
+                                    Stock mínimo obligatorio
+                                </div>
+                                <div class="form-text small">Dispara alerta si la existencia es menor o igual.</div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2 mt-4 pt-3 border-top">
+                            <a th:href="@{/productos}" class="btn btn-rs-outline justify-content-center text-nowrap">Cancelar</a>
+                            <button type="submit" class="btn btn-rs-primary justify-content-center text-nowrap">
+                                <span class="material-symbols-outlined">save</span>
+                                <span th:text="${isEdit ? 'Actualizar Producto' : 'Guardar Producto'}">Guardar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para Previsualización y Drag & Drop de Imágenes -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('imagenArchivo');
+            const dropZone = document.getElementById('dropZone');
+            const previewCard = document.getElementById('previewCard');
+            const emptyPlaceholder = document.getElementById('emptyPreviewPlaceholder');
+            const imgPreview = document.getElementById('imgPreview');
+            const fileNameElem = document.getElementById('previewFileName');
+            const fileSizeElem = document.getElementById('previewFileSize');
+            const btnQuitar = document.getElementById('btnQuitarImagen');
+            const hiddenUrl = document.getElementById('imagenUrlHidden');
+            const previewBadge = document.getElementById('previewBadge');
+
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function handleFile(file) {
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP o GIF).');
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen seleccionada supera el límite máximo de 5MB.');
+                    return;
+                }
+
+                const objectUrl = URL.createObjectURL(file);
+                imgPreview.src = objectUrl;
+                fileNameElem.textContent = file.name;
+                fileSizeElem.textContent = formatBytes(file.size);
+                if (previewBadge) {
+                    previewBadge.innerHTML = '<span>Nueva imagen</span>';
+                }
+
+                previewCard.style.setProperty('display', 'flex', 'important');
+                if (emptyPlaceholder) emptyPlaceholder.style.setProperty('display', 'none', 'important');
+            }
+
+            fileInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    handleFile(this.files[0]);
+                }
+            });
+
+            // Soporte Drag and Drop
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('dragover');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    fileInput.files = files;
+                    handleFile(files[0]);
+                }
+            });
+
+            // Botón Quitar Imagen
+            if (btnQuitar) {
+                btnQuitar.addEventListener('click', function () {
+                    fileInput.value = '';
+                    if (hiddenUrl) hiddenUrl.value = '';
+                    imgPreview.src = '#';
+                    previewCard.style.setProperty('display', 'none', 'important');
+                    if (emptyPlaceholder) emptyPlaceholder.style.setProperty('display', 'flex', 'important');
+                });
+            }
+        });
+    </script>
+
+</div>
+</body>
+</html>

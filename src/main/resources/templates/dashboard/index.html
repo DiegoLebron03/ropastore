@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- 1. Encabezado de Página -->
+    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h1 class="h3 fw-bold text-dark mb-0">Dashboard Operativo</h1>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">En Línea</span>
+            </div>
+            <p class="text-muted mb-0" style="font-size: 0.92rem;">
+                Resumen general y estado de existencias del inventario en tiempo real
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a th:href="@{/reportes/existencias/descargar}" class="btn btn-rs-outline btn-sm text-nowrap">
+                <span class="material-symbols-outlined text-primary">download</span>
+                <span>Descargar TXT</span>
+            </a>
+            <a th:href="@{/inventario/operaciones}" class="btn btn-rs-primary btn-sm text-nowrap">
+                <span class="material-symbols-outlined">add</span>
+                <span>Nueva Operación</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. Banner de Alerta Contextual Semántica (si hay stock crítico) -->
+    <div th:if="${totalBajoStock > 0}" class="alert alert-warning border-warning-subtle shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between p-3 mb-4 rounded-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-2 rounded bg-warning bg-opacity-25 text-warning-emphasis">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div>
+                <div class="fw-semibold text-dark">
+                    Atención: Hay <span th:text="${totalBajoStock}">0</span> productos con existencias por debajo del stock mínimo recomendado.
+                </div>
+                <div class="text-secondary small">
+                    Se recomienda registrar entradas de reabastecimiento para evitar roturas de stock en tienda.
+                </div>
+            </div>
+        </div>
+        <a th:href="@{/productos(estado='ACTIVO')}" class="btn btn-sm btn-outline-dark mt-2 mt-md-0 fw-semibold">
+            Ver Productos Afectados
+        </a>
+    </div>
+
+    <!-- 3. Cuadrícula de 4 Tarjetas KPI -->
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Total Productos -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Total Productos</span>
+                    <div class="rs-kpi-icon-badge">
+                        <span class="material-symbols-outlined">apparel</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value" th:text="${totalProductos}">0</div>
+                <div class="rs-kpi-footer d-flex align-items-center gap-1 text-success">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                    <span>Catálogo activo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Stock Crítico / Bajo -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Stock Bajo</span>
+                    <div class="rs-kpi-icon-badge" style="background-color: var(--rs-warning-bg); color: var(--rs-warning-dark);">
+                        <span class="material-symbols-outlined">warning</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value text-danger" th:text="${totalBajoStock}">0</div>
+                <div class="rs-kpi-footer text-muted">
+                    Productos por reponer
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Movimientos Hoy -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Movimientos Hoy</span>
+                    <div class="rs-kpi-icon-badge" style="background-color: var(--rs-info-bg); color: var(--rs-info);">
+                        <span class="material-symbols-outlined">sync_alt</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value" th:text="${movimientosHoy}">0</div>
+                <div class="rs-kpi-footer text-muted">
+                    Transacciones del turno
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Valoración del Inventario -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="rs-card rs-kpi-card h-100">
+                <div class="rs-kpi-header">
+                    <span class="rs-kpi-label">Valor en Stock</span>
+                    <div class="rs-kpi-icon-badge">
+                        <span class="material-symbols-outlined">payments</span>
+                    </div>
+                </div>
+                <div class="rs-kpi-value" th:text="${'$' + #numbers.formatDecimal(valorInventario, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                <div class="rs-kpi-footer text-muted">
+                    Costo total acumulado
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Fila Principal: Últimos Movimientos & Productos en Riesgo -->
+    <div class="row g-4 mb-4">
+        <!-- Tabla de Últimos Movimientos -->
+        <div class="col-12 col-lg-8">
+            <div class="rs-card h-100">
+                <div class="rs-card-header">
+                    <h2 class="rs-card-title d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">history</span>
+                        <span>Últimos Movimientos de Inventario</span>
+                    </h2>
+                    <a th:href="@{/inventario/movimientos}" class="btn btn-sm btn-link text-decoration-none">Ver todos</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="rs-table">
+                        <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Artículo</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Cantidad</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(ultimosMovimientos)}">
+                            <td colspan="5" class="text-center text-muted py-4">No se registran movimientos recientes.</td>
+                        </tr>
+                        <tr th:each="m : ${ultimosMovimientos}">
+                            <td class="text-muted small" th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}">01/09/2026</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rs-product-thumb rs-product-thumb-sm" style="width: 32px; height: 32px; min-width: 32px; max-width: 32px; min-height: 32px; max-height: 32px; overflow: hidden; flex-shrink: 0; border-radius: 6px;">
+                                        <img th:if="${m.producto.hasImagen()}" th:src="@{${m.producto.imagenUrl}}" th:alt="${m.producto.descripcion}" class="rs-product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+                                        <div th:unless="${m.producto.hasImagen()}" class="rs-product-placeholder">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">apparel</span>
+                                        </div>
+                                    </div>
+                                    <a th:href="@{/productos/{id}(id=${m.producto.id})}" class="text-decoration-none fw-semibold text-dark text-truncate">
+                                        <span class="rs-code-tag me-1" th:text="${m.producto.codigo}">CAM-001</span>
+                                        <span th:text="${m.producto.descripcion}">Camisa</span>
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:if="${m.isEntrada()}" class="rs-badge-in" th:text="${m.tipo.descripcion}">Compra</span>
+                                <span th:if="${m.isSalida()}" class="rs-badge-out" th:text="${m.tipo.descripcion}">Venta</span>
+                            </td>
+                            <td class="text-end fw-semibold" th:classappend="${m.isEntrada()} ? 'text-success' : 'text-danger'"
+                                th:text="${(m.isEntrada() ? '+' : '-') + m.cantidad}">+10</td>
+                            <td class="text-end font-monospace fw-bold" th:text="${m.balanceResultante}">50</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Lateral: Artículos Bajo Stock Crítico -->
+        <div class="col-12 col-lg-4">
+            <div class="rs-card h-100">
+                <div class="rs-card-header">
+                    <h2 class="rs-card-title d-flex align-items-center gap-2 text-danger">
+                        <span class="material-symbols-outlined text-danger">warning</span>
+                        <span>Stock Crítico</span>
+                    </h2>
+                    <span class="badge bg-danger-subtle text-danger" th:text="${#lists.size(productosCriticos)}">0</span>
+                </div>
+                <div class="rs-card-body p-3 p-sm-3.5 d-flex flex-column gap-3">
+                    <div th:if="${#lists.isEmpty(productosCriticos)}" class="text-center text-muted py-4 px-3">
+                        <span class="material-symbols-outlined text-success" style="font-size: 32px;">check_circle</span>
+                        <p class="mt-2 mb-0 small">Todos los artículos cuentan con stock superior al mínimo.</p>
+                    </div>
+
+                    <div th:each="p : ${productosCriticos}" class="rs-critico-item">
+                        <!-- Parte Superior: Miniatura + Identificación + Stock mínimo con signo de advertencia -->
+                        <div class="d-flex align-items-center gap-3 min-w-0">
+                            <div class="rs-product-thumb rs-product-thumb-sm me-1.5" style="width: 38px; height: 38px; min-width: 38px; max-width: 38px; min-height: 38px; max-height: 38px; overflow: hidden; flex-shrink: 0; border-radius: 8px; margin-right: 8px;">
+                                <img th:if="${p.hasImagen()}" th:src="@{${p.imagenUrl}}" th:alt="${p.descripcion}" class="rs-product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+                                <div th:unless="${p.hasImagen()}" class="rs-product-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <span class="material-symbols-outlined text-secondary" style="font-size: 18px;">apparel</span>
+                                </div>
+                            </div>
+                            <div class="min-w-0 flex-grow-1">
+                                <span class="rs-code-tag text-nowrap d-inline-block mb-0.5" style="font-size: 0.7rem; padding: 1px 6px;" th:text="${p.codigo}">CHA-003</span>
+                                <a th:href="@{/productos/{id}(id=${p.id})}"
+                                   class="fw-semibold small text-dark text-truncate d-block text-decoration-none"
+                                   th:text="${p.descripcion}"
+                                   th:title="${p.descripcion}">Chaqueta Denim</a>
+                                <div class="d-flex align-items-center gap-1 text-danger small mt-0.5" style="font-size: 0.76rem;">
+                                    <span class="material-symbols-outlined text-danger" style="font-size: 14px;">warning</span>
+                                    <span>Stock: <strong th:text="${p.stockActual}">3</strong> / Mínimo: <strong th:text="${p.stockMinimo}">5</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parte Inferior: Botón de Reabastecer -->
+                        <div class="mt-1">
+                            <a th:href="@{/inventario/operaciones(productoId=${p.id}, tipo='ENTRADA')}"
+                               class="btn btn-sm btn-outline-success w-100 py-1.5 d-flex align-items-center justify-content-center gap-1 shadow-sm"
+                               style="font-size: 0.8rem; font-weight: 500; border-radius: 6px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">add_box</span>
+                                <span>Reabastecer</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

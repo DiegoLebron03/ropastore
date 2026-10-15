@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::mainBody})}">
+<body>
+<div th:fragment="mainBody">
+
+    <!-- Encabezado -->
+    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <a th:href="@{/productos}" class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1 mb-2">
+                <span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span>
+                <span>Volver al Catálogo</span>
+            </a>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="rs-code-tag fs-6 text-nowrap" th:text="${producto.codigo}">CAM-001</span>
+                <h1 class="h3 fw-bold text-dark mb-0 text-break" th:text="${producto.descripcion}">Camisa Oversize</h1>
+                <span th:if="${producto.isActivo()}" class="rs-badge-active text-nowrap">Activo</span>
+                <span th:unless="${producto.isActivo()}" class="rs-badge-inactive text-nowrap">Inactivo</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a th:href="@{/inventario/operaciones(productoId=${producto.id}, tipo='ENTRADA')}" class="btn btn-outline-success btn-sm text-nowrap">
+                <span class="material-symbols-outlined">add_box</span>
+                <span>Entrada</span>
+            </a>
+            <a th:href="@{/inventario/operaciones(productoId=${producto.id}, tipo='SALIDA')}" class="btn btn-outline-danger btn-sm text-nowrap">
+                <span class="material-symbols-outlined">indeterminate_check_box</span>
+                <span>Salida</span>
+            </a>
+            <a th:href="@{/productos/{id}/editar(id=${producto.id})}" class="btn btn-rs-outline btn-sm text-nowrap">
+                <span class="material-symbols-outlined">edit</span>
+                <span>Editar</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Información del Producto y Fotografía -->
+    <div class="row g-3 mb-4">
+        <!-- Columna Izquierda: Fotografía de la Prenda -->
+        <div class="col-12 col-lg-4 col-xl-3">
+            <div class="rs-card h-100 p-3 text-center d-flex flex-column align-items-center justify-content-between">
+                <div class="rs-product-detail-hero mb-3 position-relative" style="max-width: 220px; height: 190px; margin: 0 auto; border-radius: 12px; overflow: hidden;">
+                    <img th:if="${producto.hasImagen()}" th:src="@{${producto.imagenUrl}}" th:alt="${producto.descripcion}" class="rs-product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
+                    <div th:unless="${producto.hasImagen()}" class="rs-product-placeholder h-100">
+                        <span class="material-symbols-outlined" style="font-size: 48px;">apparel</span>
+                    </div>
+                    <span th:if="${producto.isActivo()}" class="position-absolute top-0 end-0 m-2 rs-badge-active shadow-sm">Activo</span>
+                    <span th:unless="${producto.isActivo()}" class="position-absolute top-0 end-0 m-2 rs-badge-inactive shadow-sm">Inactivo</span>
+                </div>
+                <div class="w-100 text-start">
+                    <div class="text-muted small fw-semibold text-uppercase">Prenda Catalogada</div>
+                    <h5 class="fw-bold text-dark mb-1" th:text="${producto.descripcion}">Camisa Oversize</h5>
+                    <div class="d-flex align-items-center gap-2 small text-muted">
+                        <span class="badge bg-light text-secondary border" th:text="${producto.categoria != null ? producto.categoria.nombre : '-'}">Camisas</span>
+                        <span th:if="${producto.marca != null}" th:text="${producto.marca}">Zara</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Métricas y Especificaciones -->
+        <div class="col-12 col-lg-8 col-xl-9">
+            <div class="row g-3">
+                <!-- Existencia Actual -->
+                <div class="col-12 col-sm-6">
+                    <div class="rs-card p-3 h-100">
+                        <div class="text-muted small fw-semibold text-uppercase">Existencia Actual</div>
+                        <div class="h2 fw-bold font-monospace mt-1 mb-0"
+                             th:classappend="${producto.isBajoStock()} ? 'text-danger' : 'text-success'"
+                             th:text="${producto.stockActual}">30</div>
+                        <div class="small mt-1 text-muted" th:if="${producto.isBajoStock()}">
+                            <span class="text-danger fw-semibold">¡Bajo stock!</span> Mínimo: <span th:text="${producto.stockMinimo}">10</span>
+                        </div>
+                        <div class="small mt-1 text-muted" th:unless="${producto.isBajoStock()}">
+                            Nivel óptimo (Mín: <span th:text="${producto.stockMinimo}">10</span>)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Precio & Costo -->
+                <div class="col-12 col-sm-6">
+                    <div class="rs-card p-3 h-100">
+                        <div class="text-muted small fw-semibold text-uppercase">Precio de Venta</div>
+                        <div class="h2 fw-bold text-dark font-monospace mt-1 mb-0"
+                             th:text="${'$' + #numbers.formatDecimal(producto.precio, 1, 'COMMA', 2, 'POINT')}">$1,450.00</div>
+                        <div class="small mt-1 text-muted">
+                            Costo adquisición: <span class="fw-semibold font-monospace" th:text="${'$' + #numbers.formatDecimal(producto.costo, 1, 'COMMA', 2, 'POINT')}">$850.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Valor del Inventario -->
+                <div class="col-12 col-sm-6">
+                    <div class="rs-card p-3 h-100">
+                        <div class="text-muted small fw-semibold text-uppercase">Valor en Almacén</div>
+                        <div class="h2 fw-bold text-dark font-monospace mt-1 mb-0"
+                             th:text="${'$' + #numbers.formatDecimal(producto.getValorInventario(), 1, 'COMMA', 2, 'POINT')}">$25,500.00</div>
+                        <div class="small mt-1 text-muted">Stock actual × Costo unitario</div>
+                    </div>
+                </div>
+
+                <!-- Atributos -->
+                <div class="col-12 col-sm-6">
+                    <div class="rs-card p-3 h-100">
+                        <div class="text-muted small fw-semibold text-uppercase">Especificaciones</div>
+                        <div class="small mt-2">
+                            <div><strong>Categoría:</strong> <span th:text="${producto.categoria != null ? producto.categoria.nombre : 'N/A'}">Camisas</span></div>
+                            <div><strong>Marca:</strong> <span th:text="${producto.marca != null ? producto.marca : 'N/A'}">Zara</span></div>
+                            <div><strong>Talla / Color:</strong> <span th:text="${producto.talla != null ? producto.talla.name() : '-'}">M</span> / <span th:text="${producto.color != null ? producto.color : '-'}">Blanco</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Movimientos de este Producto -->
+    <div class="rs-card shadow-sm mb-4">
+        <div class="rs-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h2 class="rs-card-title d-flex align-items-center gap-2" style="font-size: 0.95rem;">
+                <span class="material-symbols-outlined text-primary">receipt_long</span>
+                <span>Historial de Movimientos del Artículo</span>
+            </h2>
+            <span class="badge bg-light text-secondary border font-monospace" th:text="${#lists.size(movimientos) + ' transacciones'}">0 transacciones</span>
+        </div>
+        <div class="table-responsive">
+            <table class="rs-table">
+                <thead>
+                <tr>
+                    <th class="text-nowrap">Fecha</th>
+                    <th>Tipo Transacción</th>
+                    <th class="text-end text-nowrap">Cantidad</th>
+                    <th class="text-end text-nowrap d-none d-lg-table-cell">Costo Unitario</th>
+                    <th class="text-end text-nowrap d-none d-sm-table-cell">Total Operación</th>
+                    <th class="text-end text-nowrap">Balance Resultante</th>
+                    <th class="d-none d-md-table-cell">Observación</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(movimientos)}">
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        No hay movimientos registrados para este artículo.
+                    </td>
+                </tr>
+                <tr th:each="m : ${movimientos}">
+                    <td class="text-muted small text-nowrap" th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}">01/09/2026</td>
+                    <td>
+                        <span th:if="${m.isEntrada()}" class="rs-badge-in text-nowrap" th:text="${m.tipo.descripcion}">Compra</span>
+                        <span th:if="${m.isSalida()}" class="rs-badge-out text-nowrap" th:text="${m.tipo.descripcion}">Venta</span>
+                    </td>
+                    <td class="text-end fw-bold font-monospace text-nowrap"
+                        th:classappend="${m.isEntrada()} ? 'text-success' : 'text-danger'"
+                        th:text="${(m.isEntrada() ? '+' : '-') + m.cantidad}">+30</td>
+                    <td class="text-end text-muted font-monospace text-nowrap d-none d-lg-table-cell" th:text="${'$' + #numbers.formatDecimal(m.costoUnitario, 1, 'COMMA', 2, 'POINT')}">$850.00</td>
+                    <td class="text-end fw-semibold text-dark font-monospace text-nowrap d-none d-sm-table-cell" th:text="${'$' + #numbers.formatDecimal(m.getTotalOperacion(), 1, 'COMMA', 2, 'POINT')}">$25,500.00</td>
+                    <td class="text-end font-monospace fw-bold text-dark text-nowrap" th:text="${m.balanceResultante}">30</td>
+                    <td class="text-muted small d-none d-md-table-cell text-truncate" style="max-width: 180px;" th:text="${m.observacion != null ? m.observacion : '-'}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
