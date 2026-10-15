@@ -30,7 +30,7 @@
     </div>
 
     <!-- 2. Banner de Alerta Contextual Semántica (si hay stock crítico) -->
-    <div th:if="${totalBajoStock > 0}" class="alert alert-danger border-danger-subtle shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between p-3 mb-4 rounded-3">
+    <div th:if="${totalBajoStock > 0}" class="alert alert-danger rs-alert-danger-soft border-danger-subtle shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between p-3 mb-4 rounded-3" style="background-color: #FEF2F2; border-color: #FECACA;">
         <div class="d-flex align-items-center gap-3">
             <div class="p-2 rounded bg-danger bg-opacity-10 text-danger">
                 <span class="material-symbols-outlined">warning</span>

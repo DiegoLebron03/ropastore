@@ -938,5 +938,11 @@ img {
     color: #FFFFFF !important;
 }
 
+/* Alerta de peligro/atención con fondo desaturado y suave */
+.rs-alert-danger-soft {
+    background-color: #FEF2F2 !important;
+    border-color: #FECACA !important;
+}
+
 
 
