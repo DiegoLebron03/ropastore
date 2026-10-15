@@ -21,7 +21,7 @@
                     <ul class="nav nav-pills w-100 p-1 bg-light rounded-3" role="tablist">
                         <li class="nav-item flex-fill" role="presentation">
                             <button class="nav-link w-100 fw-semibold text-center"
-                                    th:classappend="${transaccionDTO.tipo != null && transaccionDTO.tipo.isEntrada()} ? 'active bg-success text-white' : 'text-secondary'"
+                                    th:classappend="${transaccionDTO.tipo != null && transaccionDTO.tipo.isEntrada()} ? 'active rs-tab-entrada text-white' : 'text-secondary'"
                                     id="tab-entrada-btn" type="button" onclick="seleccionarModo('ENTRADA')">
                                 <span class="material-symbols-outlined align-middle me-1">add_box</span>
                                 <span>Registrar Entrada</span>
@@ -237,7 +237,7 @@ function seleccionarModo(modo) {
     const btnText = document.getElementById('btn-submit-text');
 
     if (modo === 'ENTRADA') {
-        btnEntrada.className = 'nav-link w-100 fw-semibold text-center active bg-success text-white';
+        btnEntrada.className = 'nav-link w-100 fw-semibold text-center active rs-tab-entrada text-white';
         btnSalida.className = 'nav-link w-100 fw-semibold text-center text-secondary';
         optEntradas.style.display = '';
         optSalidas.style.display = 'none';

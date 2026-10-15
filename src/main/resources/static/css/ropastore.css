@@ -8,11 +8,11 @@
 
 :root {
     /* Paleta Principal de Marca */
-    --rs-primary: #16A34A;
-    --rs-primary-dark: #166534;
-    --rs-primary-light: #4ADE80;
-    --rs-primary-soft: #DCFCE7;
-    --rs-primary-bg: #F0FDF4;
+    --rs-primary: #198754;
+    --rs-primary-dark: #157347;
+    --rs-primary-light: #25a267;
+    --rs-primary-soft: #d1e7dd;
+    --rs-primary-bg: #f8fbf9;
 
     /* Neutros */
     --rs-slate-900: #0F172A;
@@ -27,8 +27,8 @@
     --rs-white:     #FFFFFF;
 
     /* Semánticos */
-    --rs-success: #16A34A;
-    --rs-success-bg: #DCFCE7;
+    --rs-success: #198754;
+    --rs-success-bg: #d1e7dd;
     --rs-warning: #EF4444;
     --rs-warning-bg: #FEE2E2;
     --rs-warning-dark: #B91C1C;
@@ -923,6 +923,19 @@ img {
     background-color: var(--rs-white);
     border-color: var(--rs-slate-300);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Botón de Registrar Entrada en Operaciones (Tono verde #16A34A intercambiado) */
+.rs-tab-entrada,
+.nav-pills .nav-link.active.rs-tab-entrada {
+    background-color: #16A34A !important;
+    border-color: #16A34A !important;
+    color: #FFFFFF !important;
+}
+
+.rs-tab-entrada:hover {
+    background-color: #15803D !important;
+    color: #FFFFFF !important;
 }
 
 
