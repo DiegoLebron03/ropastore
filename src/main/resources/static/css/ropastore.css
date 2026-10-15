@@ -29,9 +29,9 @@
     /* Semánticos */
     --rs-success: #16A34A;
     --rs-success-bg: #DCFCE7;
-    --rs-warning: #F59E0B;
-    --rs-warning-bg: #FEF3C7;
-    --rs-warning-dark: #92400E;
+    --rs-warning: #EF4444;
+    --rs-warning-bg: #FEE2E2;
+    --rs-warning-dark: #B91C1C;
     --rs-danger: #EF4444;
     --rs-danger-bg: #FEE2E2;
     --rs-danger-dark: #B91C1C;
@@ -488,8 +488,8 @@ img {
 }
 
 .rs-badge-lowstock {
-    background-color: var(--rs-warning-bg);
-    color: var(--rs-warning-dark);
+    background-color: var(--rs-danger-bg);
+    color: var(--rs-danger-dark);
     font-weight: 600;
     font-size: 0.75rem;
     padding: 4px 10px;

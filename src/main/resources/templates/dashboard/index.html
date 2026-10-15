@@ -30,9 +30,9 @@
     </div>
 
     <!-- 2. Banner de Alerta Contextual Semántica (si hay stock crítico) -->
-    <div th:if="${totalBajoStock > 0}" class="alert alert-warning border-warning-subtle shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between p-3 mb-4 rounded-3">
+    <div th:if="${totalBajoStock > 0}" class="alert alert-danger border-danger-subtle shadow-sm d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between p-3 mb-4 rounded-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="p-2 rounded bg-warning bg-opacity-25 text-warning-emphasis">
+            <div class="p-2 rounded bg-danger bg-opacity-10 text-danger">
                 <span class="material-symbols-outlined">warning</span>
             </div>
             <div>
@@ -44,7 +44,7 @@
                 </div>
             </div>
         </div>
-        <a th:href="@{/productos(estado='ACTIVO')}" class="btn btn-sm btn-outline-dark mt-2 mt-md-0 fw-semibold">
+        <a th:href="@{/productos(estado='ACTIVO')}" class="btn btn-sm btn-outline-danger mt-2 mt-md-0 fw-semibold">
             Ver Productos Afectados
         </a>
     </div>
@@ -73,7 +73,7 @@
             <div class="rs-card rs-kpi-card h-100">
                 <div class="rs-kpi-header">
                     <span class="rs-kpi-label">Stock Bajo</span>
-                    <div class="rs-kpi-icon-badge" style="background-color: var(--rs-warning-bg); color: var(--rs-warning-dark);">
+                    <div class="rs-kpi-icon-badge" style="background-color: var(--rs-danger-bg); color: var(--rs-danger-dark);">
                         <span class="material-symbols-outlined">warning</span>
                     </div>
                 </div>

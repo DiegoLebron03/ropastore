@@ -10,8 +10,8 @@
     </div>
 
     <!-- Advertencia -->
-    <div th:if="${advertenciaMensaje}" class="alert alert-warning alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
-        <span class="material-symbols-outlined text-warning flex-shrink-0">warning</span>
+    <div th:if="${advertenciaMensaje}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
+        <span class="material-symbols-outlined text-danger flex-shrink-0">warning</span>
         <div class="flex-grow-1 min-w-0 text-break" th:text="${advertenciaMensaje}">Advertencia sobre la operación.</div>
         <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
