@@ -5,12 +5,8 @@
     <div class="d-flex flex-column flex-grow-1 overflow-auto">
         <!-- Brand Header (Interactivo: clic para plegar/desplegar) -->
         <div class="rs-brand d-flex align-items-center justify-content-between" onclick="toggleSidebar()" role="button" title="Plegar / Desplegar menú lateral">
-            <div class="d-flex align-items-center gap-2 text-decoration-none text-dark flex-grow-1 min-w-0" style="cursor: pointer;">
+            <div class="d-flex align-items-center text-decoration-none text-dark flex-grow-1 min-w-0" style="cursor: pointer;">
                 <img th:src="@{/images/logo.png}" alt="RopaStore Logo"/>
-                <div class="rs-brand-text">
-                    <span class="rs-brand-title">RopaStore</span>
-                    <span class="rs-brand-subtitle">Inventario Inteligente</span>
-                </div>
             </div>
             <button class="btn btn-sm btn-light border d-lg-none p-1 text-muted" type="button" onclick="event.stopPropagation(); closeMobileSidebar()" aria-label="Cerrar menú">
                 <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
