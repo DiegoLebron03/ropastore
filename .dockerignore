@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+.env*
+.neon
+target
+node_modules
+docs
+*.log
